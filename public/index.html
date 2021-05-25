@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%22100%22>🐺</text></svg>">
+    <title>Werewolf Online</title>
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <script type="module" src="/components/components.js"></script>
+</head>
+
+<body>
+
+    <style>
+        main {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        app-video-client {
+            flex: 1 0 min(100%, 500px);
+            height: 100vh;
+        }
+
+        .right-panel {
+            margin-left: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media screen and (max-width: 1073px) {
+            app-video-client {
+                height: calc(100vh - 400px);
+            }
+
+            .right-panel {
+                align-self: flex-end;
+                flex-direction: row-reverse;
+            }
+        }
+    </style>
+    <main>
+        <app-video-client></app-video-client>
+        <div class="right-panel">
+            <app-chat></app-chat>
+            <app-playing-card id="your-role-card" data-icon="minion" style="margin: 32px;"></app-playing-card>
+        </div>
+    </main>
+    <div class="modal" onclick="if(event.target.classList.contains('modal')) event.target.classList.add('fade-hide')">
+        <div class="modal-card">
+            <img src="svg/banner.svg" style='width: 100%; height: auto;'>
+            <p style="margin: 32px 40px;" class="text-s1">
+                My friends and I living in Taiwan just went into Covid level 3. Most in-person events are cancelled.
+                So because I can't meet with my friends in person I decided to build this and play online instead.
+            </p>
+        </div>
+    </div>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>

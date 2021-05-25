@@ -1,0 +1,38 @@
+id,name,team, description
+alpha-wolf,Alpha Wolf,werewolf,"You are a werewolf, but you appear to be a villager to the seer(s)."
+angel,Angel,villager,"On the first night, choose someone to protect. As long as you are alive, they cannot die. If lynched, they reveal their role and stay alive."
+apprentice-seer,Apprentice Seer,villager,Become the Seer if the Seer is killed.
+baker,Baker,villager,"Each night, choose a player to  receive some bread. Bread protects them from being lynched on the following day."
+beholder,Beholder,villager,"On the first night, learn who the seer(s) is/are."
+bodyguard,Bodyguard,villager,"Each night, choose a different player to protect. That player cannot be killed that night."
+bupid,Cupid,villager,"Choose two players to be lovers. They will both know who their lover is. If one of those players dies, the other dies from a broken heart."
+cursed,Cursed,,"You are a villager until attacked by werewolves/vampires, at which time you become a werewolf/vampire. (whichever attacked you)"
+diseased,Diseased,villager,"If you are attacked by werewolves, the werewolves do not get to eat the following night."
+doppelganger,Doppelgänger,,"Select a player the first night. If that player dies, you secretly take over their role."
+dream-wolf,Dream Wolf,werewolf,"If a werewolf dies, you replace them (you're not allowed to wake up until a werewolf dies.)"
+drunk,Drunk,villager,"You are a villager until the third night, when you remember your real role."
+executioner,Executioner,villager,"If you are lynched, reveal your role and choose another player to die instead of you."
+golem,Golem,villager,You cannot die at night.
+hoodlum,Hoodlum,,"Indicate two players on the first night. If they die and you are alive at the end of the game, you win."
+hunter,Hunter,villager,"If you are killed, take someone down with you."
+idiot,Idiot,villager,Always vote for players to die.
+lone-wolf,Lone Wolf,werewolf,"You are a werewolf, but you only win if you are the last wolf team member alive."
+lycan,Lycan,villager,"You are a villager, but you appear to be a werewolf to the seer(s)."
+mason,Mason,villager,You know who the other Masons are.
+minion,Minion,werewolf,"Work with the werewolves (or vampires), but don’t wake up with them."
+old-hag,Old Hag,villager,"At night, indicate a player who must leave the village during the next day."
+pacifist,Pacifist,villager,Never vote for players to die.
+poison-wolf,Poison Wolf,werewolf,"You are a werewolf. Each night, choose a different player to poison. If they have a night power, it malfunctions.""
+Prince, ""You can't be lynched. If the town votes to lynch you, reveal your role and stay alive."
+seer,Seer,villager,"Each night, choose a player and learn if they are, ""a werewolf, a vampire, or on the villager team."
+sorcerer,Sorcerer,werewolf,"You are a seer, but you are on the Werewolf team. You only know if you've found a werewolf, another seer, or something else."
+spellcaster,Spellcaster,villager,"At night, indicate a player who must not use their voice the following day."
+tanner,Tanner,,You only win if you are killed.
+tough-guy,Tough Guy,villager,You survive an extra day if attacked by werewolves at night.
+vampire,Vampire,,Choose a player to kill each night. You win if all of the werewolves are dead and you are still alive.
+villager,Villager,villager,Find the werewolves and kill them during the day.
+werewolf-hunter,Werewolf Hunter,werewolf,"You are a werewolf. If you are killed, take someone down with you."
+werewolf,Werewolf,werewolf,"Eat a villager each night. All the werewolves must agree on a target, or else the moderator will let the Alpha Wolf decide. "
+whore,Whore,villager,"Each night, choose a player to sleep with. If you choose a werewolf, a vampire, or their victim, you die. If the werewolves or vampires target you at night, you don’t die - you weren’t home."
+wolf-cub,Wolf Cub,werewolf,"You are a werewolf. If you die, the werewolves get two kills the following night."
+zombie-wolf,Zombie Wolf,werewolf,"You are a werewolf. Once per game, choose a player to become a werewolf."

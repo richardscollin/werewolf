@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "module": "es6",
+        "target": "es2019",
+        "moduleResolution": "node",
+        "noImplicitAny": true,
+        "outDir": "./dist/",
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "sourceMap": true,
+        "strict": true,
+        "strictNullChecks": true
+    }
+}

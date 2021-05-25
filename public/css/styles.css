@@ -1,0 +1,53 @@
+:root {
+  --default-border: 1px solid black;
+  --default-border-radius: 4px;
+}
+
+body {
+  font-size: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.modal {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background-color: rgba(0, 0, 0, 0.7);
+}
+.modal-card {
+  background-color: white;
+  box-shadow: 2px 2px 8px 3px rgba(0, 0, 0, 0.2);
+  width: 80%;
+  max-width: 800px;
+  padding: 8px;
+  border-radius: 4px;
+  overflow-y: auto;
+  font-size: 1.5rem;
+}
+.hidden {
+  display: none;
+}
+.fade-hide {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s .5s, opacity .5s linear;
+}
+
+/*
+Text style 1
+*/
+.text-s1 {
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 24px;
+}
