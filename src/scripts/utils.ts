@@ -1,4 +1,4 @@
-export const $ = document.querySelector.bind(document);
+export const $ = (s: string) => document.querySelector(s);
 
 // this one isn't really needed
 // I just use it to get syntax highlighting of html

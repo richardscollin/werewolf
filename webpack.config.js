@@ -1,9 +1,12 @@
 import { resolve } from "path";
 import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
+console.log(resolve("dist"));
 
 export default {
-  entry: "./src/index.ts",
-  devtool: "inline-source-map",
+  entry: {
+    main: "./src/index.ts",
+    components: "./src/components/components.ts",
+  },
   mode: process.env.NODE_ENV || "production",
   stats: {
     errorDetails: true,
@@ -20,5 +23,9 @@ export default {
   resolve: {
     extensions: [".ts", ".js"],
   },
-  plugins: [new BundleAnalyzerPlugin()],
+  //plugins: [new BundleAnalyzerPlugin()],
+  output: {
+    filename: "[name].bundle.js",
+    path: resolve("dist"),
+  },
 };

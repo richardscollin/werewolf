@@ -1,4 +1,31 @@
-const rolesData: any[] = [
+import { Team } from "./werewolf";
+
+interface IRole {
+  id: string;
+  name: string;
+  team: Team;
+  description: string;
+}
+
+export class Role {
+  constructor(
+    public id: string,
+    public name: string,
+    public team: Team,
+    public description: string
+  ) {}
+
+  /*
+  Returns true iff a werewolf. Will return false for characters
+  on the werewolf team that are not considered werewolves by the seer
+  */
+  isWerewolf(): boolean {
+    return this.id.includes("wolf");
+  }
+}
+
+
+export const rolesData: IRole[] = [
   {
     id: "alpha-wolf",
     name: "Alpha Wolf",
@@ -49,7 +76,7 @@ const rolesData: any[] = [
   {
     id: "cursed",
     name: "Cursed",
-    team: "",
+    team: "villager",
     description:
       "You are a villager until attacked by werewolves/vampires, at which time you become a werewolf/vampire. (whichever attacked you)",
   },
@@ -63,7 +90,7 @@ const rolesData: any[] = [
   {
     id: "doppelganger",
     name: "Doppelgänger",
-    team: "",
+    team: undefined,
     description:
       "Select a player the first night. If that player dies, you secretly take over their role.",
   },
@@ -97,7 +124,7 @@ const rolesData: any[] = [
   {
     id: "hoodlum",
     name: "Hoodlum",
-    team: "",
+    team: undefined,
     description:
       "Indicate two players on the first night. If they die and you are alive at the end of the game, you win.",
   },
@@ -184,8 +211,8 @@ const rolesData: any[] = [
   {
     id: "tanner",
     name: "Tanner",
-    team: "",
-    description: "You only win if you are killed.",
+    team: undefined,
+    description: "You only win if you are lynched.",
   },
   {
     id: "tough-guy",
@@ -196,7 +223,7 @@ const rolesData: any[] = [
   {
     id: "vampire",
     name: "Vampire",
-    team: "",
+    team: "vampire",
     description:
       "Choose a player to kill each night. You win if all of the werewolves are dead and you are still alive.",
   },
@@ -242,4 +269,5 @@ const rolesData: any[] = [
       "You are a werewolf. Once per game, choose a player to become a werewolf.",
   },
 ];
-export { rolesData };
+
+export const roles = new Map(rolesData.map((o) => [o.id, o as Role]));

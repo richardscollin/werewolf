@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
+import ws from "ws";
 import { IPlayerState } from "../interfaces.js";
-import { AssignRoleEvent, GameEvent } from "./game-event.js";
+import { AssignRoleEvent, GameEvent, ErrorEvent } from "./game-event.js";
 import { GameServer } from "./game-server.js";
 import { shuffleArray } from "./utils.js";
 import { Team, Role, roles } from "./werewolf.js";
@@ -70,9 +71,7 @@ class WerewolfStateMachine {
       newRoles.push(...Array(roleCount).fill(role)); // Note this is a shallow copy. Should be okay for now
     }
     if (playerIds.length !== acc) {
-      throw new Error(
-        `Attempting assignRoles with incorrect number of players ${acc} ${playerIds.length}`
-      );
+      return false;
     }
 
     shuffleArray(playerIds);
@@ -83,6 +82,7 @@ class WerewolfStateMachine {
         hasAmulate: false,
       });
     }
+    return true;
   }
 
   gameTick() {
@@ -146,7 +146,7 @@ class WerewolfServer extends GameServer {
     super();
   }
 
-  handleGameEvent(gameEvent: GameEvent): boolean {
+  handleGameEvent(gameEvent: GameEvent, sender: ws): boolean {
     switch (gameEvent.eventType) {
       case "start-game":
         const gameId: GameId = uuidv4();
@@ -160,18 +160,21 @@ class WerewolfServer extends GameServer {
 
         //TODO filter by current room
         const clientIds = Array.from(this.clients.keys());
-        stateMachine.assignRoles(clientIds, scenario);
-        console.log("state machine players");
-        console.log(stateMachine.players);
-        for (let [clientId, playerState] of stateMachine.players) {
-          const assignRoleEvent = new AssignRoleEvent(
-            clientId,
-            gameId,
-            playerState.role
-          );
-          console.log("sending assign role events");
-          this.transmitGameEvent(clientId, assignRoleEvent);
+        const success = stateMachine.assignRoles(clientIds, scenario);
+        if (success) {
+          for (let [clientId, playerState] of stateMachine.players) {
+            const assignRoleEvent = new AssignRoleEvent(
+              clientId,
+              gameId,
+              playerState.role
+            );
+            this.transmitGameEvent(clientId, assignRoleEvent);
+          }
+        } else {
+          const errorEvent = new ErrorEvent("could not start game incorrect number of players.");
+          this.transmitGameEventSocket(sender, errorEvent);
         }
+
         return true;
     }
     return false;

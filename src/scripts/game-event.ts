@@ -1,14 +1,15 @@
-import { GameServer } from "./game-server.js";
 import { Role } from "./werewolf.js";
 
 type GameEventType =
   | "auth-new-client"
   | "chat"
   | "end-day"
+  | "error"
   | "nick-change"
   | "players-ready"
   | "assign-role"
-  | "start-game";
+  | "start-game"
+  | "vote";
 
 export abstract class GameEvent {
   constructor(public eventType: GameEventType) {}
@@ -21,6 +22,17 @@ export abstract class GameEvent {
     }
   }
 }
+
+export class AssignRoleEvent extends GameEvent {
+  constructor(
+    public clientId: string,
+    public gameId: string,
+    public role: Role
+  ) {
+    super("assign-role");
+  }
+}
+
 export class AuthNewClientEvent extends GameEvent {
   constructor(public clientId: string, public sessionKey: string) {
     super("auth-new-client");
@@ -35,6 +47,12 @@ export class ChatEvent extends GameEvent {
     public sendDate: Date
   ) {
     super("chat");
+  }
+}
+
+export class ErrorEvent extends GameEvent {
+  constructor(public message: string) {
+    super("error");
   }
 }
 
@@ -63,12 +81,14 @@ export class StartGameEvent extends GameEvent {
   }
 }
 
-export class AssignRoleEvent extends GameEvent {
+export class VoteEvent extends GameEvent {
   constructor(
     public clientId: string,
     public gameId: string,
-    public role: Role
+    public voteId: string,
+    public playerClientId: string,
+    public time: Date
   ) {
-    super("assign-role");
+    super("vote");
   }
 }

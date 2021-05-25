@@ -6,7 +6,7 @@ export class AppPlayingCard extends HTMLElement {
     let t = document.createElement("template");
     t.innerHTML = html`<style>
         .playing-card {
-          --card-width: 300px;
+          --card-width: 200px;
           font-size: 14px;
           display: flex;
           flex-direction: column;
