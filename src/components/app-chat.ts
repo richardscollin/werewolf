@@ -4,6 +4,19 @@ import { html } from "../scripts/utils";
 export class AppChat extends HTMLElement {
   onmessage: any = null;
 
+  refreshMessages(messages: IMessage[]) {
+    this.clearMessages();
+    for (let m of messages) {
+      this.appendMessage(m);
+    }
+  }
+
+  clearMessages() {
+    const chatLog = this.shadowRoot!.querySelector("#chat-log")!;
+    chatLog.innerHTML = "";
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
   appendMessage(msg: IMessage) {
     // find html escaping template library
     const chatMessage = document.createElement("div");

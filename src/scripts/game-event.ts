@@ -1,13 +1,15 @@
+import { IMessage } from "../interfaces.js";
 import { Role } from "./werewolf.js";
 
 type GameEventType =
+  | "assign-role"
   | "auth-new-client"
   | "chat"
   | "end-day"
   | "error"
+  | "messages-archive"
   | "nick-change"
   | "players-ready"
-  | "assign-role"
   | "start-game"
   | "vote";
 
@@ -64,6 +66,11 @@ export class NickChangeEvent extends GameEvent {
     public sendDate: Date
   ) {
     super("nick-change");
+  }
+}
+export class MessagesArchiveEvent extends GameEvent {
+  constructor(public messages: IMessage[]) {
+    super("messages-archive");
   }
 }
 

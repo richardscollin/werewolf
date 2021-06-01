@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%22100%22>🐺</text></svg>">
+    <link rel="icon" href="favicon.svg">
     <title>Werewolf Online</title>
     <link rel="stylesheet" href="/css/reset.css">
     <link rel="stylesheet" href="/css/styles.css">
@@ -52,7 +52,8 @@
             <app-playing-card id="your-role-card" data-icon="minion" style="margin: 32px;"></app-playing-card>
         </div>
     </main>
-    <div class="modal" onclick="if(event.target.classList.contains('modal')) event.target.classList.add('fade-hide')">
+    <div class="modal hidden"
+        onclick="if(event.target.classList.contains('modal')) event.target.classList.add('fade-hide')">
         <div class="modal-card">
             <img src="svg/banner.svg" style='width: 100%; height: auto;'>
             <p style="margin: 32px 40px;" class="text-s1">

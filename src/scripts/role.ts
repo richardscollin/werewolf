@@ -180,6 +180,7 @@ export const rolesData: IRole[] = [
     team: "villager",
     description: "Never vote for players to die.",
   },
+  /*
   {
     id: "poison-wolf",
     name: "Poison Wolf",
@@ -187,6 +188,7 @@ export const rolesData: IRole[] = [
     description:
       'You are a werewolf. Each night, choose a different player to poison. If they have a night power, it malfunctions." Prince, "You can\'t be lynched. If the town votes to lynch you, reveal your role and stay alive.',
   },
+  */
   {
     id: "seer",
     name: "Seer",

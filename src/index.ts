@@ -4,6 +4,7 @@ import { AppPlayingCard } from "./components/app-playing-card";
 import { IMessage } from "./interfaces.js";
 import { WerewolfClient } from "./scripts/werewolf-client";
 import { $ } from "./scripts/utils";
+import { GameEvent, MessagesArchiveEvent } from "./scripts/game-event";
 
 function addKeybindings() {
   document.addEventListener("keydown", (event) => {
@@ -17,15 +18,17 @@ function addKeybindings() {
 window.addEventListener("load", () => {
   addKeybindings();
   const client = new WerewolfClient();
-  client.connect();
-
-  const chatElement = $("app-chat") as AppChat;
-  chatElement.onmessage = client.onMessage.bind(client);
 
   client.receiveChat = (msg: IMessage) => {
     chatElement.appendMessage(msg);
   };
-  client.welcome();
+
+  client.connect();
+
+  const chatElement = $("app-chat") as AppChat;
+  chatElement.onmessage = client.onMessage.bind(client);
+  client.appChat = chatElement;
+
 
   const playingCard = $("#your-role-card") as AppPlayingCard;
 
@@ -41,4 +44,5 @@ window.addEventListener("load", () => {
 
   const device = new mediasoupClient.Device();
   console.log(device);
+  console.log("testing callign /refresh")
 });

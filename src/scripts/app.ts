@@ -4,8 +4,8 @@ import { WerewolfServer } from "./werewolf-server.js";
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(express.static("public"));
-app.use(express.static("dist"));
+app.use("/", express.static("public"));
+app.use("/", express.static("dist"));
 
 const server = app.listen(PORT, async () => {
   console.log(`️[server]: Server is running at http://localhost:${PORT}`);

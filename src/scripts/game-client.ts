@@ -5,11 +5,14 @@ import {
   NickChangeEvent,
   StartGameEvent,
   AuthNewClientEvent,
+  MessagesArchiveEvent,
 } from "./game-event";
 import { v4 as uuidv4 } from "uuid";
+import { AppChat } from "../components/app-chat";
 
 abstract class GameClient {
   socket?: WebSocket;
+  appChat?: AppChat;
   receiveChat?: (message: IMessage) => any;
 
   set clientId(id: string) {
@@ -60,6 +63,9 @@ abstract class GameClient {
         console.log(`received ${gameEvent.eventType}`);
         this._handleGameEvent(gameEvent);
       };
+
+      this.sendGameEvent(new MessagesArchiveEvent([]));
+      this.welcome();
     };
     this.socket.onclose = () => {
       console.log("socket closed");
@@ -107,6 +113,11 @@ abstract class GameClient {
         }
         break;
 
+      case "messages-archive":
+        const messagesArchive = gameEvent as MessagesArchiveEvent;
+        this.appChat?.refreshMessages(messagesArchive.messages);
+        break;
+
       default:
         if (!this.handleGameEvent(gameEvent)) {
           console.error("Unknown game event");
@@ -143,6 +154,9 @@ abstract class GameClient {
         console.log("starting game");
         const startEvent = new StartGameEvent();
         this.sendGameEvent(startEvent);
+      } else if (text.startsWith("/refresh")) {
+        console.log("retrieving old messages");
+        this.sendGameEvent(new MessagesArchiveEvent([]));
       } else {
         console.warn("Unrecognized chat command");
       }

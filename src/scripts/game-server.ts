@@ -1,6 +1,12 @@
 import ws from "ws";
 import { randomUUID, randomBytes, timingSafeEqual } from "crypto";
-import { AuthNewClientEvent, GameEvent, ErrorEvent } from "./game-event.js";
+import {
+  AuthNewClientEvent,
+  GameEvent,
+  ErrorEvent,
+  ChatEvent,
+  MessagesArchiveEvent,
+} from "./game-event.js";
 import { v4 as uuidv4 } from "uuid";
 import { IMessage } from "../interfaces.js";
 
@@ -38,8 +44,25 @@ abstract class GameServer {
     // and pass game specific events to the subclass
     switch (gameEvent.eventType) {
       case "chat":
+        const chatEvent = gameEvent as ChatEvent;
+        //chatEvent.
+        const message = {
+          senderId: chatEvent.senderId,
+          senderName: chatEvent.senderName,
+          key: uuidv4(),
+          text: chatEvent.message,
+          date: chatEvent.sendDate,
+        };
+        this.chatLog.push(message);
+
         this.broadcastGameEvent(gameEvent);
         break;
+
+      case "messages-archive":
+        const messagesArchive = new MessagesArchiveEvent(this.chatLog);
+        this.transmitGameEventSocket(sender, messagesArchive);
+        break;
+
       case "nick-change":
         this.broadcastGameEvent(gameEvent);
         break;
@@ -97,7 +120,7 @@ abstract class GameServer {
         // TODO maybe also close old socket
         connectionInfo.socket.close();
         connectionInfo.socket = socket;
-        
+
         // then they're authenticated
       } else {
         console.log("didn't pass auth");
@@ -125,17 +148,17 @@ abstract class GameServer {
   }
 
   transmitGameEvent(clientId: string, gameEvent: GameEvent) {
-      const connectionInfo = this.clients.get(clientId);
-      let socket = connectionInfo?.socket;
-      this.transmitGameEventSocket(socket, gameEvent);
+    const connectionInfo = this.clients.get(clientId);
+    let socket = connectionInfo?.socket;
+    this.transmitGameEventSocket(socket, gameEvent);
   }
 
-  transmitGameEventSocket(socket: ws| undefined, gameEvent: GameEvent) {
+  transmitGameEventSocket(socket: ws | undefined, gameEvent: GameEvent) {
     // get reference to client for that host
     if (socket?.readyState === ws.OPEN) {
       socket.send(JSON.stringify(gameEvent));
     } else {
-      console.log("attempting send on bad socket")
+      console.log("attempting send on bad socket");
       console.log(socket);
     }
   }

@@ -6,7 +6,8 @@ export class AppPlayingCard extends HTMLElement {
     let t = document.createElement("template");
     t.innerHTML = html`<style>
         .playing-card {
-          --card-width: 200px;
+          --card-width: 300px;
+          --card-color: rgba(0, 0, 0, .5);
           font-size: 14px;
           display: flex;
           flex-direction: column;
@@ -18,11 +19,20 @@ export class AppPlayingCard extends HTMLElement {
           box-shadow: 2px 2px 7px 4px rgba(0, 0, 0, 0.5);
           color: white;
         }
+
+        .playing-card__villager-team {
+          --card-color: rgba(0, 0, 255, .5);
+        }
+
+        .playing-card__werewolf-team {
+          --card-color: rgba(255, 0, 0, .5);
+        }
+
         .playing-card__title-bar {
           display: flex;
           background-color: var(--card-color);
           align-items: baseline;
-          margin: 0.5rem 1rem;
+          margin: 0.25rem 1rem;
           padding: 0.5rem 1rem;
           font-weight: bold;
           letter-spacing: 0.013em;
@@ -39,10 +49,10 @@ export class AppPlayingCard extends HTMLElement {
 
         .playing-card__img {
           border: 4px outset rgba(0, 0, 0, 0.6);
-          background-color: var(--card-color);
+          background-color: rgba(0, 0, 0, .5);
           border-radius: 7px;
           height: 50%;
-          margin: 1rem;
+          margin: .25rem 1rem;
           display: grid;
           place-items: center;
         }
@@ -75,28 +85,38 @@ export class AppPlayingCard extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log("playing card connected");
+    //console.log("playing card connected");
   }
 
   static get observedAttributes() {
-    return ["data-icon", "data-description"];
+    return ["data-icon", "data-description", "data-name", "data-team"];
   }
 
   attributeChangedCallback(attrName: string, oldVal: string, newVal: string) {
-    console.log("playing card updated");
+    //console.log("playing card updated");
     const root = this.shadowRoot!;
     switch (attrName) {
       case "data-icon":
         const href = `/svg/werewolf-icons.svg#${newVal}`;
-        (
-          root.querySelector(".playing-card__title") as HTMLSpanElement
-        ).innerText = newVal;
         root.querySelector("use")?.setAttribute("href", href);
         break;
       case "data-description":
         (
           root.querySelector(".playing-card__description") as HTMLElement
         ).innerText = newVal;
+        break;
+      case "data-name":
+        (
+          root.querySelector(".playing-card__title") as HTMLSpanElement
+        ).innerText = newVal;
+        break;
+      case "data-team":
+        const classList = (
+          root.querySelector(".playing-card") as HTMLElement
+        ).classList;
+        classList.toggle("playing-card__werewolf-team", newVal === "werewolf");
+        classList.toggle("playing-card__villager-team", newVal === "villager");
+
         break;
     }
   }
