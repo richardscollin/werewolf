@@ -1,11 +1,4 @@
-import { Team } from "./werewolf";
-
-interface IRole {
-  id: string;
-  name: string;
-  team: Team;
-  description: string;
-}
+import { IRole, Team } from "../interfaces.js";
 
 export class Role {
   constructor(
@@ -15,6 +8,11 @@ export class Role {
     public description: string
   ) {}
 
+  static fromObject(object: IRole) {
+    const { id, name, team, description } = object;
+    return new Role(id, name, team, description);
+  }
+
   /*
   Returns true iff a werewolf. Will return false for characters
   on the werewolf team that are not considered werewolves by the seer
@@ -23,7 +21,6 @@ export class Role {
     return this.id.includes("wolf");
   }
 }
-
 
 export const rolesData: IRole[] = [
   {
@@ -94,6 +91,7 @@ export const rolesData: IRole[] = [
     description:
       "Select a player the first night. If that player dies, you secretly take over their role.",
   },
+  /*
   {
     id: "dream-wolf",
     name: "Dream Wolf",
@@ -101,6 +99,7 @@ export const rolesData: IRole[] = [
     description:
       "If a werewolf dies, you replace them (you're not allowed to wake up until a werewolf dies.)",
   },
+  */
   {
     id: "drunk",
     name: "Drunk",
@@ -115,12 +114,16 @@ export const rolesData: IRole[] = [
     description:
       "If you are lynched, reveal your role and choose another player to die instead of you.",
   },
+  /*
   {
     id: "golem",
     name: "Golem",
     team: "villager",
     description: "You cannot die at night.",
   },
+  */
+
+  /*
   {
     id: "hoodlum",
     name: "Hoodlum",
@@ -128,6 +131,7 @@ export const rolesData: IRole[] = [
     description:
       "Indicate two players on the first night. If they die and you are alive at the end of the game, you win.",
   },
+  */
   {
     id: "hunter",
     name: "Hunter",
@@ -203,6 +207,7 @@ export const rolesData: IRole[] = [
     description:
       "You are a seer, but you are on the Werewolf team. You only know if you've found a werewolf, another seer, or something else.",
   },
+  /*
   {
     id: "spellcaster",
     name: "Spellcaster",
@@ -210,6 +215,7 @@ export const rolesData: IRole[] = [
     description:
       "At night, indicate a player who must not use their voice the following day.",
   },
+  */
   {
     id: "tanner",
     name: "Tanner",

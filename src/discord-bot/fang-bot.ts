@@ -4,6 +4,13 @@ dotenv.config();
 const config = {
   botToken: process.env.DISCORD_BOT_TOKEN,
 };
+
+// The core game logic should be in the werewolf script
+// and implemented in a way that supports both the discord bot
+// and the website
+import { WerewolfStateMachine, roles, Role } from "../scripts/werewolf.js";
+const game = new WerewolfStateMachine("discord-game");
+
 import { commands, Command } from "./commands.js";
 
 // I'm using the beta api v13 which is unreleased (So I can use the slash command api)
@@ -38,11 +45,23 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
     console.log(`Executing ${name} command`);
     switch (name as Command) {
       case "help":
-        console.log(interaction);
-        interaction.reply("hello");
+        interaction.reply(
+          `The commands are: ${commands.map((c) => "/" + c.name).join(" ")}`
+        );
         break;
       case "kill":
         interaction.reply("Okay I'll send you a DM");
+        break;
+
+      case "list":
+        if (!isModerator(interaction)) {
+          interaction.reply(
+            "Sorry we can't start the game because you don't have the moderator role."
+          );
+          break;
+        }
+        interaction.reply(game.players.toString());
+        console.log(game);
         break;
       case "start":
         if (!isModerator(interaction)) {
@@ -51,19 +70,42 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
           );
           break;
         }
+        console.log(interaction.options);
+
+        let roleCounts: Map<string, number> | undefined;
+        if (interaction.options[0].name === "roles") {
+          const roleString = interaction.options[0].value as string;
+          roleCounts = parseRoleString(roleString);
+          if (!roleCounts) {
+            interaction.reply("Sorry there's an error in the role string.");
+            break;
+          }
+        }
+        roleCounts = roleCounts!;
+        console.log(roleCounts);
 
         const cm = interaction.guild!.channels.cache;
         const werewolfVoiceChannel = cm.find(
           (c) => c.name === "werewolf" && !c.isText()
         )!;
+        //console.log(werewolfVoiceChannel);
         const players = werewolfVoiceChannel.members;
-        const playersText = Array.from(
-          players.mapValues((x) => x.nickname)
-        ).join("\n");
+        if (players.size === 0) {
+          interaction.reply(`Error no players in the werewolf voice channel.`);
+          break;
+        }
+
+        const playerIds = Array.from(players.keys(), (id) => id.toString());
+        const playersText = Array.from(players, ([k, v]) => v.nickname).join(
+          "\n"
+        );
+
+        game.assignRoles(playerIds, roleCounts);
 
         players?.forEach((player) => {
           player.createDM().then((dm) => {
-            dm.send("This should be a DM.");
+            const x = game.players.get(player.id);
+            dm.send(`Your role is ${x?.role.name}`);
           });
         });
 
@@ -95,7 +137,23 @@ client.login(config.botToken);
 
 function isModerator(interaction: Discord.CommandInteraction): boolean {
   const roles = interaction.member!.roles as Discord.GuildMemberRoleManager;
-  return Array.from(roles.cache.values(), (r) =>
-    r.name.toLowerCase()
-  ).includes("moderator");
+  return Array.from(roles.cache.values(), (r) => r.name.toLowerCase()).includes(
+    "moderator"
+  );
+}
+
+function parseRoleString(roleString: string): Map<string, number> | undefined {
+  try {
+    const result = new Map();
+    const data = roleString.split(/[:, ]/).filter((x) => x !== "");
+    for (let i = 0; i < data.length - 1; i++) {
+      if (!roles.has(data[i])) {
+        throw Error();
+      }
+      result.set(data[i], parseInt(data[i + 1]));
+    }
+    return result;
+  } catch {
+    return undefined;
+  }
 }

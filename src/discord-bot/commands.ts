@@ -1,29 +1,10 @@
 import Discord from "discord.js";
 
-export type Command = "help" | "kill" | "lynch" | "point" | "start" | "vote";
+export type Command = "help" | "kill" | "list" | "lynch" | "point" | "start" | "vote";
 export const commands: Discord.ApplicationCommandData[] = [
   {
     name: "help",
     description: "Explain all of the FangBot commands",
-  },
-  {
-    name: "start",
-    description:
-      "start a new game from all the players in the #werewolf voice channel (gm only).",
-    options: [
-      {
-        name: "number-wolves",
-        type: "INTEGER",
-        required: false,
-        description: "the number of wolves",
-      },
-      {
-        name: "include-alpha-wolf",
-        type: "BOOLEAN",
-        required: false,
-        description: "whether or not to include the alpha wolf",
-      },
-    ],
   },
   {
     name: "kill",
@@ -36,6 +17,11 @@ export const commands: Discord.ApplicationCommandData[] = [
         description: "the player you'd like to kill",
       },
     ],
+  },
+  {
+    name: "list",
+    description:
+      "this command just helps debugging",
   },
   {
     name: "lynch",
@@ -58,6 +44,20 @@ export const commands: Discord.ApplicationCommandData[] = [
         required: true,
         name: "player",
         description: "the player you want to point to",
+      },
+    ],
+  },
+  {
+    name: "start",
+    description:
+      "start a new game from all the players in the #werewolf voice channel (gm only).",
+    options: [
+      {
+        name: "roles",
+        description:
+          "A space or command seperated list containing the number of each role to use",
+        required: false,
+        type: "STRING",
       },
     ],
   },
