@@ -1,6 +1,8 @@
 import Discord from "discord.js";
 
-export type Command = "help" | "kill" | "list" | "lynch" | "point" | "start" | "vote";
+export type Command = "help" | "kill" | "lynch" | "point" | "vote" | "zmod";
+export type ModCommand = "start" | "night" | "day" | "info";
+
 export const commands: Discord.ApplicationCommandData[] = [
   {
     name: "help",
@@ -17,11 +19,6 @@ export const commands: Discord.ApplicationCommandData[] = [
         description: "the player you'd like to kill",
       },
     ],
-  },
-  {
-    name: "list",
-    description:
-      "this command just helps debugging",
   },
   {
     name: "lynch",
@@ -48,20 +45,6 @@ export const commands: Discord.ApplicationCommandData[] = [
     ],
   },
   {
-    name: "start",
-    description:
-      "start a new game from all the players in the #werewolf voice channel (gm only).",
-    options: [
-      {
-        name: "roles",
-        description:
-          "A space or command seperated list containing the number of each role to use",
-        required: false,
-        type: "STRING",
-      },
-    ],
-  },
-  {
     name: "vote",
     description: "vote on whether or not you want to lynch a player",
     options: [
@@ -78,6 +61,42 @@ export const commands: Discord.ApplicationCommandData[] = [
           {
             name: "Don't lynch",
             value: "dont-lynch",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    name: "zmod",
+    description: "the moderator commands",
+    options: [
+      {
+        name: "info",
+        type: "SUB_COMMAND",
+        description: "get game info",
+      },
+      {
+        name: "day",
+        type: "SUB_COMMAND",
+        description: "begin the day phase",
+      },
+      {
+        name: "night",
+        type: "SUB_COMMAND",
+        description: "begin the night phase",
+      },
+      {
+        name: "start",
+        type: "SUB_COMMAND",
+        description:
+          "start a new game from all the players in the #werewolf voice channel (gm only).",
+        options: [
+          {
+            name: "roles",
+            description:
+              "A space or command seperated list containing the number of each role to use",
+            required: false,
+            type: "STRING",
           },
         ],
       },
