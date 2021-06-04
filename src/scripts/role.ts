@@ -5,7 +5,7 @@ export class Role {
     public id: string,
     public name: string,
     public team: Team,
-    public description: string
+    public description: string,
   ) {}
 
   static fromObject(object: IRole) {
@@ -68,7 +68,7 @@ export const rolesData: IRole[] = [
     name: "Cupid",
     team: "villager",
     description:
-      "Choose two players to be lovers. They will both know who their lover is. If one of those players dies, the other dies from a broken heart.",
+      "On the first night, choose two players to be lovers. They will both know who their lover is. If one of those players dies, the other dies from a broken heart.",
   },
   {
     id: "cursed",
@@ -207,7 +207,6 @@ export const rolesData: IRole[] = [
     description:
       "You are a seer, but you are on the Werewolf team. You only know if you've found a werewolf, another seer, or something else.",
   },
-  /*
   {
     id: "spellcaster",
     name: "Spellcaster",
@@ -215,7 +214,6 @@ export const rolesData: IRole[] = [
     description:
       "At night, indicate a player who must not use their voice the following day.",
   },
-  */
   {
     id: "tanner",
     name: "Tanner",
@@ -269,6 +267,7 @@ export const rolesData: IRole[] = [
     description:
       "You are a werewolf. If you die, the werewolves get two kills the following night.",
   },
+  /*
   {
     id: "zombie-wolf",
     name: "Zombie Wolf",
@@ -276,6 +275,7 @@ export const rolesData: IRole[] = [
     description:
       "You are a werewolf. Once per game, choose a player to become a werewolf.",
   },
+  */
 ];
 
 export const roles = new Map(rolesData.map((o) => [o.id, o as Role]));

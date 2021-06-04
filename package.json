@@ -9,7 +9,7 @@
     "build:watch": "webpack --watch",
     "build-server:watch": "tsc --watch",
     "start": "nodemon --experimental-modules ./dist/scripts/app.js",
-    "fang-bot": "nodemon --experimental-modules ./dist/discord-bot/fang-bot.js",
+    "fang-bot": "nodemon --experimental-modules --trace-warnings --require source-map-support/register ./dist/discord-bot/fang-bot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Collin Richards",

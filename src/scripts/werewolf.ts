@@ -1,13 +1,31 @@
 import { shuffleArray } from "./utils.js";
 import { Role, roles } from "./role.js";
 import { Team, IPlayerState } from "../interfaces.js";
+import { DiscordAPIError } from "discord.js";
 export { Role, IPlayerState, Team, roles };
 export type ClientId = string;
 
+type Action = string;
+export interface INightEvent {
+  action: Action;
+  clientId: string;
+  at: string;
+}
+
+export interface INight {
+  events: INightEvent[];
+}
+
 export class WerewolfStateMachine {
   players: Map<ClientId, IPlayerState>;
+  history: INight[];
+  currentNight?: INight;
+  isNight: boolean;
+
   constructor(public gameId: string) {
     this.players = new Map<ClientId, IPlayerState>();
+    this.history = [];
+    this.isNight = false;
   }
 
   isGameOver(): boolean {
@@ -64,17 +82,289 @@ export class WerewolfStateMachine {
     return true;
   }
 
+  /*
+  Implements a generic night action for all non-werewolf players
+
+  this method is stateful. it updates the night actions array
+
+  The logic within is specific for the pointing characters role
+  for example if the pointer is seer then it will check them
+  if they are a bodyguard it will protect that player
+
+  returns a message to display to the pointer
+  */
+  playerPointsToPlayer(p1Id: string, p2Id: string, p2Name: string): string {
+    const isFirstNight = this.history.length === 0;
+    if (this.currentNight === undefined) {
+      return "You must perform the action at night.";
+    }
+
+    const checkingPlayerState = this.players.get(p1Id);
+    const checkedPlayerState = this.players.get(p2Id);
+    if (checkingPlayerState === undefined || checkedPlayerState === undefined) {
+      const error = `Error: Can't determine role for you or the player you pointed to.`;
+      return error;
+    }
+
+    const checkingRole = Role.fromObject(checkingPlayerState.role);
+    const checkedRole = Role.fromObject(checkedPlayerState.role);
+
+    let messageText = `Your are ${checkingRole.name}.`;
+
+    if (checkingRole.isWerewolf()) {
+      const numWolves = this.werewolves.length;
+      const wolfPoint = this.currentNight.events.find(
+        (x) => x.clientId === p1Id
+      );
+      if (wolfPoint) {
+        wolfPoint.at = p2Id;
+      } else {
+        this.currentNight.events.push({
+          action: "point",
+          clientId: p1Id,
+          at: p2Id,
+        });
+      }
+
+      const sameTargetCount = this.currentNight.events.filter(
+        (ne) => this.id2Role(ne.clientId).isWerewolf() && ne.at === p2Id
+      ).length;
+
+      if (sameTargetCount === numWolves) {
+        // TODO notify wolves
+        this.currentNight.events.push({
+          action: "eat",
+          clientId: p1Id, // this can be ignored
+          at: p2Id,
+        });
+      }
+
+      return `You want to eat ${p2Name}.`;
+    }
+
+    // TODO
+    // first check if player has already pointed this night
+    if (this.playerHasPointedTonight(p1Id)) {
+      return "Sorry you've already done an action tonight.";
+    }
+
+    switch (checkingRole.id) {
+      case "angel":
+        if (isFirstNight) {
+          messageText += `You have choosen to guard ${p2Name}. As long as you are alive, they cannot die. If lynched, they reveal their role and stay alive.`;
+        } else {
+          messageText += "You can only perform your action on the first night.";
+        }
+        break;
+
+      case "apprentice-seer":
+        messageText +=
+          "You are still only an apprentice. The seer must die before you can use your powers.";
+        break;
+
+      case "baker":
+        if (this.preventRepeatedTarget(p1Id, p2Id)) {
+          messageText +=
+            "You cannot target the same player two nights in a row.";
+          break;
+        }
+
+        messageText += `You placed the bread in front of ${p2Name}`;
+        this.currentNight.events.push({
+          action: "point",
+          clientId: p1Id,
+          at: p2Id,
+        });
+        break;
+
+      case "bodyguard":
+        // check that the player you are trying to protect isn't the
+        // same as the previous night
+
+        if (this.preventRepeatedTarget(p1Id, p2Id)) {
+          messageText +=
+            "You cannot target the same player two nights in a row.";
+          break;
+        }
+
+        messageText += `You are protecting ${p2Name}`;
+        this.currentNight.events.push({
+          action: "point",
+          clientId: p1Id,
+          at: p2Id,
+        });
+        break;
+      case "cupid":
+        if (isFirstNight) {
+          const loversCount = this.currentNight.events.map(
+            (x) => x.clientId === p1Id
+          ).length;
+          if (checkingPlayerState.cupidLovers === undefined) {
+            checkingPlayerState.cupidLovers = [];
+          }
+
+          if (loversCount < 2) {
+            messageText += `You pointed at ${p2Name}.`;
+            this.currentNight.events.push({
+              action: "point",
+              clientId: p1Id,
+              at: p2Id,
+            });
+            checkingPlayerState.cupidLovers.push(p2Id);
+          } else {
+            messageText += "You've already added two lovers.";
+          }
+        } else {
+          messageText += "You can only perform your action on the first night.";
+        }
+        break;
+
+      case "doppelganger":
+        if (isFirstNight) {
+          messageText += `You have choosen to copy ${p2Name}'s role. When they die you will secretly copy their role.`;
+
+          this.currentNight.events.push({
+            action: "point",
+            clientId: p1Id,
+            at: p2Id,
+          });
+          checkingPlayerState.dopplegangedPlayer = p2Id;
+        } else {
+          messageText += "You can only perform your action on the first night.";
+        }
+        break;
+
+      case "sorcerer":
+      case "seer":
+        const isWolf =
+          checkedRole.isWerewolf() && checkedRole.id !== "alpha-wolf";
+        messageText += `They are ${!isWolf ? "not " : ""} a werewolf.`;
+
+        if (checkingRole.id === "sorcerer") {
+          messageText += ` And they are ${
+            checkedRole.id !== "seer" ? "not" : ""
+          } the seer.`;
+        }
+
+        this.currentNight.events.push({
+          action: "point",
+          clientId: p1Id,
+          at: p2Id,
+        });
+        break;
+
+      case "old-hag":
+      case "spellcaster":
+        if (this.preventRepeatedTarget(p1Id, p2Id)) {
+          messageText +=
+            "You cannot target the same player two nights in a row.";
+          break;
+        }
+
+        messageText += `You are silencing ${p2Name}`;
+        this.currentNight.events.push({
+          action: "point",
+          clientId: p1Id,
+          at: p2Id,
+        });
+        break;
+
+      case "villager":
+        messageText += "Close your eyes.";
+        break;
+
+      case "whore":
+        if (this.preventRepeatedTarget(p1Id, p2Id)) {
+          messageText +=
+            "You cannot target the same player two nights in a row.";
+          break;
+        }
+
+        messageText += `You want to sleep with ${p2Name}. Have fun! 🍆💦`;
+        this.currentNight.events.push({
+          action: "point",
+          clientId: p1Id,
+          at: p2Id,
+        });
+        break;
+
+      default:
+        messageText += "This players role is still unimplemented.";
+        break;
+    }
+
+    return messageText;
+  }
+
+  preventRepeatedTarget(pointer: string, pointie: string): boolean {
+    /*
+    several roles do not allow repeating the action on the same player
+    2 nights in a row. This is the logic for that
+    */
+    if (this.history.length > 0) {
+      const prevNight = this.history[this.history.length - 1];
+      const prevPoint = prevNight.events.find(
+        (ne) => ne.clientId === pointer && ne.action === "point"
+      );
+      if (prevPoint && prevPoint.at === pointie) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  playerHasPointedTonight(playerId: string): boolean {
+    return (
+      this.currentNight?.events.find(
+        (nightEvent) =>
+          nightEvent.clientId === playerId && nightEvent.action === "point"
+      ) !== undefined
+    );
+  }
+
   toJSON() {
     return JSON.stringify({
       players: Object.fromEntries(this.players),
     });
   }
 
-  get werewolves() : string[] {
+  beginNight() {
+    this.isNight = true;
+    this.currentNight = { events: [] };
+  }
+
+  beginDay() {
+    this.isNight = false;
+
+    this.history.push(this.currentNight!);
+    this.currentNight = undefined;
+  }
+
+  get werewolves(): string[] {
     return Array.from(this.players.entries(), ([k, v]) => {
       if (Role.fromObject(v.role).isWerewolf()) {
         return k;
       }
     }).filter((it) => it) as string[];
+  }
+
+  get seers(): string[] {
+    return Array.from(this.players.entries(), ([k, v]) => {
+      if (v.role.id === "seer") {
+        return k;
+      }
+    }).filter((it) => it) as string[];
+  }
+
+  get masons(): string[] {
+    return Array.from(this.players.entries(), ([k, v]) => {
+      if (v.role.id === "mason") {
+        return k;
+      }
+    }).filter((it) => it) as string[];
+  }
+
+  id2Role(id: string) {
+    return Role.fromObject(this.players.get(id)?.role!);
   }
 }

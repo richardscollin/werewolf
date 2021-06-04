@@ -28,92 +28,95 @@ const client = new Discord.Client({
 
 client.once("ready", () => {
   console.log("fang-bot is ready");
-  const guildIds = Array.from(client.guilds.cache.keys());
-  const guildId = guildIds[0]; // for now only 1 guild
-
-  client.guilds.cache
-    .get(guildId)
-    ?.commands.set(commands)
-    .then(() => {
-      console.log("Updated commands");
-    })
-    .catch(console.error);
+  for (let [guildId, guild] of client.guilds.cache.entries()) {
+    console.log("Updating");
+    console.log(guild.name);
+    client.guilds.cache
+      .get(guildId)
+      ?.commands.set(commands)
+      .then(() => {
+        console.log("Updated commands");
+      })
+      .catch(console.error);
+  }
 });
 
 client.on("interaction", async (interaction: Discord.Interaction) => {
-  if (interaction.isCommand()) {
-    const commandInteraction = interaction as Discord.CommandInteraction;
-    const command = commandInteraction.command;
-    const options = commandInteraction.options;
-    const name = commandInteraction.commandName;
+  try {
+    if (interaction.isCommand()) {
+      const commandInteraction = interaction as Discord.CommandInteraction;
+      const command = commandInteraction.command;
+      const options = commandInteraction.options;
+      const name = commandInteraction.commandName;
 
-    console.log(`Executing ${name} command`);
-    switch (name as Command) {
-      default:
-        console.log(command);
-        interaction.reply("I'm sorry. I don't understand.");
-        break;
+      console.log(`Executing ${name} command`);
+      switch (name as Command) {
+        default:
+          console.log(command);
+          interaction.reply("I'm sorry. I don't understand.");
+          break;
 
-      case "help":
-        interaction.reply(
-          `The commands are: ${commands.map((c) => "/" + c.name).join(" ")}`
-        );
-        break;
-      case "kill":
-        interaction.reply("Okay I'll send you a DM");
-        break;
-
-      case "lynch":
-        break;
-      case "point":
-        const pointie = (options![0] as any).user as Discord.User;
-
-        // TODO first make sure there isn't an existing point for the night
-
-        interaction.reply(`You pointed at ${pointie.username}`);
-        break;
-      case "vote":
-        break;
-      case "zmod":
-        if (!isModerator(interaction)) {
+        case "help":
           interaction.reply(
-            "Sorry you can't run this command because you aren't assigned the moderator role."
+            `The commands are: ${commands.map((c) => "/" + c.name).join(" ")}`
           );
           break;
-        }
-        const subcommand = options[0].name;
-        console.log(`Executing ${subcommand} command`);
-        switch (subcommand as ModCommand) {
-          case "day":
-            break;
-          case "night":
-            night(interaction);
-            break;
-          case "info":
-            interaction.user
-              .createDM()
-              .then((dm) => {
-                game.players;
-                dm.send(game.toJSON());
-              })
-              .catch(console.error);
-            interaction.reply("ok");
-            break;
-          case "start":
-            startGame(interaction);
-            break;
-        }
-        interaction.reply("done");
+        case "kill":
+          interaction.reply("Okay I'll send you a DM");
+          break;
 
-        break;
+        case "lynch":
+          break;
+        case "point":
+          point(interaction);
+          break;
+        case "vote":
+          break;
+        case "zmod":
+          if (!isModerator(interaction)) {
+            interaction.reply(
+              "Sorry you can't run this command because you aren't assigned the moderator role."
+            );
+            break;
+          }
+          const subcommand = options[0].name;
+          console.log(`Executing ${subcommand} subcommand`);
+          switch (subcommand as ModCommand) {
+            case "day":
+              day(interaction);
+              break;
+            case "night":
+              night(interaction);
+              break;
+            case "info":
+              let infoMessage = "Roles:\n";
+              for (let [playerId, playerState] of game.players.entries()) {
+                // @ts-ignore
+                const username = client.users.cache.get(playerId)?.username;
+                infoMessage += `${username}: ${playerState.role.name}`;
+              }
+              const dm = await interaction.user.createDM();
+              dm.send(infoMessage);
+              interaction.reply("DM'd");
+              break;
+            case "start":
+              startGame(interaction);
+              break;
+          }
+          interaction.reply("done");
+
+          break;
+      }
     }
+  } catch (e) {
+    console.error(e);
   }
 });
-/*
+
 client.on("message", (message) => {
   console.log({message})
 })
-*/
+
 client.login(config.botToken);
 
 function isModerator(interaction: Discord.CommandInteraction): boolean {
@@ -139,9 +142,8 @@ function parseRoleString(roleString: string): Map<string, number> | undefined {
   }
 }
 
-function startGame(interaction: Discord.CommandInteraction) {
+async function startGame(interaction: Discord.CommandInteraction) {
   let roleCounts: Map<string, number> | undefined;
-  console.log();
 
   // @ts-ignore
   const roleString = interaction.options[0].options[0].value as string;
@@ -155,10 +157,15 @@ function startGame(interaction: Discord.CommandInteraction) {
   console.log(roleCounts);
 
   const cm = interaction.guild!.channels.cache;
+  console.log(cm);
+  cm.forEach(x => console.log(x));
   const werewolfVoiceChannel = cm.find(
-    (c) => c.name === "werewolf" && !c.isText()
+    (c) =>
+      (c.name.toLowerCase() === "table 1" ||
+        c.name.toLowerCase() === "werewolf") &&
+      !c.isText()
   )!;
-  //console.log(werewolfVoiceChannel);
+  console.log(werewolfVoiceChannel);
   const players = werewolfVoiceChannel.members;
   if (players.size === 0) {
     interaction.reply(`Error no players in the werewolf voice channel.`);
@@ -170,31 +177,82 @@ function startGame(interaction: Discord.CommandInteraction) {
 
   game.assignRoles(playerIds, roleCounts);
 
-  const werewolfTeam = game.werewolves.map((x)=> {
-    const user = client.users.cache.get(x);
+  const id2username = (id: string) => {
+    // @ts-ignore
+    const user = client.users.cache.get(id);
     return user?.username;
-  });
+  };
+  const werewolfTeam = game.werewolves.map(id2username);
+  const seerTeam = game.seers.map(id2username);
+  const masonTeam = game.masons.map(id2username);
 
-  players?.forEach((player) => {
-    player.createDM().then((dm) => {
-      const playerState = game.players.get(player.id);
-      dm.send(`Your role is ${playerState?.role.name}`);
-      if (playerState?.role.team === "werewolf") {
-      dm.send(`The wolves are: ${werewolfTeam.join(" ")}`);
-      }
-    });
-  });
+  for (let [playerId, playerState] of game.players) {
+    // @ts-ignore
+    const player = client.users.cache.get(playerId)!;
+    const dm = await player.createDM();
+    let message = `Your role is ${playerState.role.name}.\n`;
+    message += playerState.role.description;
 
-  interaction.reply(
-    new Discord.MessageEmbed().setTitle(
-      `Starting a game with ${players?.size} players:\n${playersText}`
-    )
-  );
-  /*
+    if (playerState.role.team === "werewolf") {
+      message += `\nThe wolves are: ${werewolfTeam.join(" ")}`;
+    }
+
+    if (playerState.role.id === "beholder") {
+      message += `\nThe seer is ${seerTeam.join(" ")}`;
+    } else if (playerState.role.id === "mason") {
+      message += `\nThe masons are: ${masonTeam.join(" ")}`;
+    }
+    dm.send(message);
+  }
+
   interaction.reply(
     `Starting a game with ${players?.size} players:\n${playersText}`
   );
-    */
 }
 
-function night(interaction: Discord.CommandInteraction) {}
+function night(interaction: Discord.CommandInteraction) {
+  interaction.reply("The night phase has begun.");
+
+  game.werewolves.forEach(async (wolf) => {
+    // @ts-ignore
+    const dm = await client.users.cache.get(wolf)?.createDM();
+    dm?.send(
+      `Waiting on you to point to a target. If all the wolves` +
+        ` are pointing at the same player` +
+        ` then they will be eaten. If the alpha wolf` +
+        ` uses the kill command the pointing phase will be skipped.`
+    );
+  });
+
+  game.beginNight();
+}
+
+function day(interaction: Discord.CommandInteraction) {
+  interaction.reply("The night phase has begun.");
+  game.beginDay();
+}
+
+async function point(interaction: Discord.CommandInteraction) {
+  const options = interaction.options;
+  const pointie = (options![0] as any).user as Discord.User;
+
+  if (!game.isNight) {
+    interaction.reply("Pointing is only allowed at night.");
+  }
+
+  const responseMessage = game.playerPointsToPlayer(
+    interaction.user.id,
+    pointie.id,
+    pointie.username
+  );
+  interaction.reply(responseMessage);
+
+  const currentRole = game.id2Role(interaction.user.id);
+  if (currentRole.isWerewolf()) {
+    game.werewolves.forEach(async (wolf) => {
+      // @ts-ignore
+      const dm = await client.users.cache.get(wolf)?.createDM();
+      dm?.send(`${interaction.user.username} pointed at ${pointie.username}.`);
+    });
+  }
+}
