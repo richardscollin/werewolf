@@ -5,7 +5,7 @@ export class Role {
     public id: string,
     public name: string,
     public team: Team,
-    public description: string,
+    public description: string
   ) {}
 
   static fromObject(object: IRole) {
@@ -61,7 +61,7 @@ export const rolesData: IRole[] = [
     name: "Bodyguard",
     team: "villager",
     description:
-      "Each night, choose a different player to protect. That player cannot be killed that night.",
+      "Each night, choose a different player to protect. That player cannot be killed that night. You cannot pick the same player two nights in a row.",
   },
   {
     id: "cupid",
@@ -198,7 +198,7 @@ export const rolesData: IRole[] = [
     name: "Seer",
     team: "villager",
     description:
-      'Each night, choose a player and learn if they are, "a werewolf, a vampire, or on the villager team.',
+      "Each night, you choose a player and learn if they are, a werewolf, a vampire, or on the villager team.",
   },
   {
     id: "sorcerer",

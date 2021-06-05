@@ -17,6 +17,7 @@ export interface INight {
 }
 
 export class WerewolfStateMachine {
+  mod?: string; // id of the game moderator
   players: Map<ClientId, IPlayerState>;
   history: INight[];
   currentNight?: INight;
@@ -127,7 +128,7 @@ export class WerewolfStateMachine {
       }
 
       const sameTargetCount = this.currentNight.events.filter(
-        (ne) => this.id2Role(ne.clientId).isWerewolf() && ne.at === p2Id
+        (ne) => this.id2Role(ne.clientId)?.isWerewolf() && ne.at === p2Id
       ).length;
 
       if (sameTargetCount === numWolves) {
@@ -155,6 +156,7 @@ export class WerewolfStateMachine {
         } else {
           messageText += "You can only perform your action on the first night.";
         }
+        checkedPlayerState.angelProtected = p1Id;
         break;
 
       case "apprentice-seer":
@@ -187,6 +189,7 @@ export class WerewolfStateMachine {
           break;
         }
 
+        this.players.get(p2Id)!.bodyguardProtected = true;
         messageText += `You are protecting ${p2Name}`;
         this.currentNight.events.push({
           action: "point",
@@ -199,9 +202,6 @@ export class WerewolfStateMachine {
           const loversCount = this.currentNight.events.map(
             (x) => x.clientId === p1Id
           ).length;
-          if (checkingPlayerState.cupidLovers === undefined) {
-            checkingPlayerState.cupidLovers = [];
-          }
 
           if (loversCount < 2) {
             messageText += `You pointed at ${p2Name}.`;
@@ -210,7 +210,16 @@ export class WerewolfStateMachine {
               clientId: p1Id,
               at: p2Id,
             });
-            checkingPlayerState.cupidLovers.push(p2Id);
+            if (loversCount === 1) {
+              // now it's 2 total
+              const lovers = this.currentNight.events
+                .filter((x) => x.clientId === p1Id)
+                .map((x) => x.at);
+              const [l1, l2] = lovers;
+
+              this.players.get(l1)!.cupidLover = l2;
+              this.players.get(l2)!.cupidLover = l1;
+            }
           } else {
             messageText += "You've already added two lovers.";
           }
@@ -228,7 +237,7 @@ export class WerewolfStateMachine {
             clientId: p1Id,
             at: p2Id,
           });
-          checkingPlayerState.dopplegangedPlayer = p2Id;
+          checkedPlayerState.dopplegangedPlayer = p1Id;
         } else {
           messageText += "You can only perform your action on the first night.";
         }
@@ -254,6 +263,20 @@ export class WerewolfStateMachine {
         break;
 
       case "old-hag":
+        if (this.preventRepeatedTarget(p1Id, p2Id)) {
+          messageText +=
+            "You cannot target the same player two nights in a row.";
+          break;
+        }
+
+        messageText += `You are casting ${p2Name} away`;
+        this.currentNight.events.push({
+          action: "point",
+          clientId: p1Id,
+          at: p2Id,
+        });
+        checkedPlayerState.oldhagCastAway = true;
+
       case "spellcaster":
         if (this.preventRepeatedTarget(p1Id, p2Id)) {
           messageText +=
@@ -267,6 +290,7 @@ export class WerewolfStateMachine {
           clientId: p1Id,
           at: p2Id,
         });
+        checkedPlayerState.spellcasterSilenced = true;
         break;
 
       case "villager":
@@ -286,6 +310,7 @@ export class WerewolfStateMachine {
           clientId: p1Id,
           at: p2Id,
         });
+        checkedPlayerState.whoreSleepover = p1Id;
         break;
 
       default:
@@ -336,6 +361,19 @@ export class WerewolfStateMachine {
   beginDay() {
     this.isNight = false;
 
+    const kills = this.currentNight?.events.filter((e) => e.action === "kill");
+    kills?.forEach((kill) => {
+      const targetId = kill.at;
+      const target = this.players.get(targetId)!;
+
+      if (
+        !target.bodyguardProtected &&
+        !(target.hasAmulate && this.history.length <= 2) // TODO double check obo
+      ) {
+        target;
+      }
+    });
+
     this.history.push(this.currentNight!);
     this.currentNight = undefined;
   }
@@ -364,7 +402,8 @@ export class WerewolfStateMachine {
     }).filter((it) => it) as string[];
   }
 
-  id2Role(id: string) {
-    return Role.fromObject(this.players.get(id)?.role!);
+  id2Role(id: string) : Role  | undefined {
+    const roleId = this.players.get(id)?.role;
+    return roleId ? Role.fromObject(roleId) : undefined;
   }
 }
