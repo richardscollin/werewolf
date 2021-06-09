@@ -6,11 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "webpack",
-    "build:watch": "webpack --watch",
-    "build-server:watch": "tsc --watch",
-    "start": "nodemon --experimental-modules ./dist/scripts/app.js",
-    "fang-bot": "nodemon --experimental-modules --trace-warnings --require source-map-support/register ./dist/discord-bot/fang-bot.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build-server": "tsc",
+    "dev": "nodemon --config nodemon-dev.json",
+    "fangbot": "nodemon --config nodemon-fangbot.json"
   },
   "author": "Collin Richards",
   "license": "UNLICENSED",
@@ -19,20 +17,19 @@
     "discord.js": "github:discordjs/discord.js",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "mediasoup": "^3.7.5",
+    "mediasoup": "^3.7.12",
     "mediasoup-client": "^3.6.30",
-    "source-map-support": "^0.5.19",
     "utf-8-validate": "^5.0.5",
     "uuid": "^8.3.2",
-    "ws": "^7.4.5"
+    "ws": "^7.4.6"
   },
   "devDependencies": {
     "@types/uuid": "^8.3.0",
     "nodemon": "^2.0.7",
     "ts-loader": "^9.2.2",
+    "ts-node": "^10.0.0",
     "typescript": "^4.2.4",
     "webpack": "^5.37.1",
-    "webpack-bundle-analyzer": "^4.4.2",
     "webpack-cli": "^4.7.0"
   }
 }
