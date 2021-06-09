@@ -13,11 +13,8 @@ export class AppPlayingCard extends HTMLElement {
           flex-direction: column;
           width: var(--card-width);
           height: calc(var(--card-width) * (3.5 / 2.5));
-          background-image: url("/images/card-texture.png");
-          background-size: cover;
           border-radius: 7px;
           box-shadow: 2px 2px 7px 4px rgba(0, 0, 0, 0.5);
-          color: white;
         }
 
         .playing-card__villager-team {
@@ -30,21 +27,14 @@ export class AppPlayingCard extends HTMLElement {
 
         .playing-card__title-bar {
           display: flex;
-          background-color: var(--card-color);
           align-items: baseline;
-          margin: 0.25rem 1rem;
-          padding: 0.5rem 1rem;
+          margin: 0.5rem 1rem;
           font-weight: bold;
-          letter-spacing: 0.013em;
-          border: 4px outset rgba(0, 0, 0, 0.6);
+          font-size: 1.3rem;
         }
 
         .playing-card__title {
           text-transform: uppercase;
-        }
-
-        .playing-card__value {
-          margin-left: auto;
         }
 
         .playing-card__img {
@@ -59,20 +49,15 @@ export class AppPlayingCard extends HTMLElement {
 
         .playing-card__description {
           line-height: 1.1;
-          background-color: var(--card-color);
           height: 26%;
           margin: 1em;
           margin-top: auto;
           font-size: 18px;
-          padding: 1rem;
-          border-radius: 7px;
-          border: 4px outset rgba(0, 0, 0, 0.6);
         }
       </style>
       <div class="playing-card">
         <div class="playing-card__title-bar">
           <span class="playing-card__title"></span>
-          <div class="playing-card__value">-1</div>
         </div>
         <div class="playing-card__img">
           <svg height="100%" viewBox="0 0 100 100">

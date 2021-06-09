@@ -34,6 +34,7 @@ export const rolesData: IRole[] = [
     id: "angel",
     name: "Angel",
     team: "villager",
+    firstNightAction: true,
     description:
       "On the first night, choose someone to protect. As long as you are alive, they cannot die. If lynched, they reveal their role and stay alive.",
   },
@@ -47,6 +48,7 @@ export const rolesData: IRole[] = [
     id: "baker",
     name: "Baker",
     team: "villager",
+    nightlyAction: true,
     description:
       "Each night, choose a player to  receive some bread. Bread protects them from being lynched on the following day.",
   },
@@ -54,12 +56,14 @@ export const rolesData: IRole[] = [
     id: "beholder",
     name: "Beholder",
     team: "villager",
+    firstNightAction: true,
     description: "On the first night, learn who the seer(s) is/are.",
   },
   {
     id: "bodyguard",
     name: "Bodyguard",
     team: "villager",
+    nightlyAction: true,
     description:
       "Each night, choose a different player to protect. That player cannot be killed that night. You cannot pick the same player two nights in a row.",
   },
@@ -67,6 +71,7 @@ export const rolesData: IRole[] = [
     id: "cupid",
     name: "Cupid",
     team: "villager",
+    firstNightAction: true,
     description:
       "On the first night, choose two players to be lovers. They will both know who their lover is. If one of those players dies, the other dies from a broken heart.",
   },
@@ -88,10 +93,10 @@ export const rolesData: IRole[] = [
     id: "doppelganger",
     name: "Doppelgänger",
     team: undefined,
+    firstNightAction: true,
     description:
       "Select a player the first night. If that player dies, you secretly take over their role.",
   },
-  /*
   {
     id: "dream-wolf",
     name: "Dream Wolf",
@@ -99,7 +104,6 @@ export const rolesData: IRole[] = [
     description:
       "If a werewolf dies, you replace them (you're not allowed to wake up until a werewolf dies.)",
   },
-  */
   {
     id: "drunk",
     name: "Drunk",
@@ -114,16 +118,13 @@ export const rolesData: IRole[] = [
     description:
       "If you are lynched, reveal your role and choose another player to die instead of you.",
   },
-  /*
   {
     id: "golem",
     name: "Golem",
     team: "villager",
     description: "You cannot die at night.",
   },
-  */
 
-  /*
   {
     id: "hoodlum",
     name: "Hoodlum",
@@ -131,7 +132,6 @@ export const rolesData: IRole[] = [
     description:
       "Indicate two players on the first night. If they die and you are alive at the end of the game, you win.",
   },
-  */
   {
     id: "hunter",
     name: "Hunter",
@@ -175,6 +175,7 @@ export const rolesData: IRole[] = [
     id: "old-hag",
     name: "Old Hag",
     team: "villager",
+    nightlyAction: true,
     description:
       "At night, indicate a player who must leave the village during the next day.",
   },
@@ -184,7 +185,6 @@ export const rolesData: IRole[] = [
     team: "villager",
     description: "Never vote for players to die.",
   },
-  /*
   {
     id: "poison-wolf",
     name: "Poison Wolf",
@@ -192,11 +192,11 @@ export const rolesData: IRole[] = [
     description:
       'You are a werewolf. Each night, choose a different player to poison. If they have a night power, it malfunctions." Prince, "You can\'t be lynched. If the town votes to lynch you, reveal your role and stay alive.',
   },
-  */
   {
     id: "seer",
     name: "Seer",
     team: "villager",
+    nightlyAction: true,
     description:
       "Each night, you choose a player and learn if they are, a werewolf, a vampire, or on the villager team.",
   },
@@ -204,6 +204,7 @@ export const rolesData: IRole[] = [
     id: "sorcerer",
     name: "Sorcerer",
     team: "werewolf",
+    nightlyAction: true,
     description:
       "You are a seer, but you are on the Werewolf team. You only know if you've found a werewolf, another seer, or something else.",
   },
@@ -211,6 +212,7 @@ export const rolesData: IRole[] = [
     id: "spellcaster",
     name: "Spellcaster",
     team: "villager",
+    nightlyAction: true,
     description:
       "At night, indicate a player who must not use their voice the following day.",
   },
@@ -230,6 +232,7 @@ export const rolesData: IRole[] = [
     id: "vampire",
     name: "Vampire",
     team: "vampire",
+    nightlyAction: true,
     description:
       "Choose a player to kill each night. You win if all of the werewolves are dead and you are still alive.",
   },
@@ -257,6 +260,7 @@ export const rolesData: IRole[] = [
     id: "whore",
     name: "Whore",
     team: "villager",
+    nightlyAction: true,
     description:
       "Each night, choose a player to sleep with. If you choose a werewolf, a vampire, or their victim, you die. If the werewolves or vampires target you at night, you don’t die - you weren’t home.",
   },
@@ -267,7 +271,6 @@ export const rolesData: IRole[] = [
     description:
       "You are a werewolf. If you die, the werewolves get two kills the following night.",
   },
-  /*
   {
     id: "zombie-wolf",
     name: "Zombie Wolf",
@@ -275,7 +278,6 @@ export const rolesData: IRole[] = [
     description:
       "You are a werewolf. Once per game, choose a player to become a werewolf.",
   },
-  */
 ];
 
 export const roles = new Map(rolesData.map((o) => [o.id, o as Role]));

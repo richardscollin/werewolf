@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 export type Command = "help" | "kill" | "lynch" | "point" | "vote" | "zmod";
-export type ModCommand = "start" | "night" | "day" | "info";
+export type ModCommand = "start" | "night" | "day" | "info"| "muteall";
 
 export const commands: Discord.ApplicationCommandData[] = [
   {
@@ -84,6 +84,11 @@ export const commands: Discord.ApplicationCommandData[] = [
         name: "night",
         type: "SUB_COMMAND",
         description: "begin the night phase",
+      },
+      {
+        name: "muteall",
+        type: "SUB_COMMAND",
+        description: "mute all the other players",
       },
       {
         name: "start",

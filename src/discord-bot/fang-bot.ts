@@ -63,7 +63,11 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
 
       case "help":
         interaction.reply(
-          `The commands are: ${commands.map((c) => "/" + c.name).join(" ")}`
+          `The commands are: ${commands.map((c) => "/" + c.name).join(" ")}` +
+            ".\nThe supported roles are:\n" +
+            Array.from(roles.values())
+              .map((role: Role) => role.id)
+              .join("\n")
         );
         break;
       case "kill":
@@ -78,7 +82,13 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
       case "vote":
         break;
       case "zmod":
-        const mod = isModerator(interaction);
+        let mod = isModerator(interaction);
+        const subcommand = options[0].name;
+
+        if (subcommand !== "start" && interaction.user.id === game.mod) {
+          mod = true;
+        }
+
         if (mod === undefined) {
           interaction.reply(
             "You are not the game moderator. (/zmod start must be run from a server channel)"
@@ -90,39 +100,31 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
           );
           break;
         }
-        const subcommand = options[0].name;
+
         console.log(`Executing ${subcommand} subcommand`);
         switch (subcommand as ModCommand) {
-          case "day":
+          case "day": {
             day(interaction);
             break;
-          case "night":
+          }
+          case "night": {
             night(interaction);
             break;
-          case "info":
-            let infoMessage = "";
-            if (game.players.size === 0) {
-              infoMessage += "There are no players in the game.";
-            } else {
-              infoMessage += "Roles:\n";
-              for (let [playerId, playerState] of game.players.entries()) {
-                // @ts-ignore
-                const username = client.users.cache.get(playerId)?.username;
-                infoMessage += `${username}: ${playerState.role.name}\n`;
-              }
-              infoMessage += JSON.stringify(game.history, null, 2) + "\n";
-              if (game.currentNight) {
-                infoMessage += JSON.stringify(game.currentNight, null, 2);
-              }
-            }
-
+          }
+          case "info": {
+            const infoMessage = game.info(client);
             const dm = await interaction.user.createDM();
             dm.send(infoMessage);
             interaction.reply("DM'd");
             break;
-          case "start":
+          }
+          case "start": {
             startGame(interaction);
+            const message = game.info(client);
+            const dm = await interaction.user.createDM();
+            dm.send(message);
             break;
+          }
         }
         break;
     }
@@ -142,10 +144,6 @@ function isModerator(
   /* If returns undefined then the command was likely launched from a pm and we can't determine
   if they are a mod. /zmod commands must be launched from the server / guild context.
   */
-  if (interaction.user.id === game.mod) {
-    return true;
-  }
-
   const roles = interaction.member?.roles;
   if (roles === undefined) {
     return undefined;
@@ -192,10 +190,7 @@ async function startGame(interaction: Discord.CommandInteraction) {
 
   const cm = interaction.guild!.channels.cache;
   const werewolfVoiceChannel = cm.find(
-    (c) =>
-      (c.name.toLowerCase().includes("table 1") ||
-        c.name.toLowerCase().includes("werewolf")) &&
-      !c.isText()
+    (c) => c.name.toLowerCase().includes("town square") && !c.isText()
   )!;
   console.log(
     `Using ${werewolfVoiceChannel.name} in ${werewolfVoiceChannel.guild.name}.`
@@ -206,16 +201,39 @@ async function startGame(interaction: Discord.CommandInteraction) {
     return;
   }
 
-  const playerIds = Array.from(players.keys(), (id) => id.toString());
-  const playersText = Array.from(players, ([k, v]) => v.nickname).join("\n");
+  let playerIds = Array.from(players.keys(), (id) => id.toString());
+  console.log(playerIds);
+  console.log(game.mod);
 
-  game.assignRoles(playerIds, roleCounts);
+  // don't include the mod as a player
+  playerIds = playerIds.filter((id) => id != game.mod);
 
   const id2username = (id: string) => {
     // @ts-ignore
     const user = client.users.cache.get(id);
     return user?.username;
   };
+
+  let playersText = "";
+  for (let playerId of playerIds) {
+    playersText += id2username(playerId) + " ";
+  }
+  game.assignRoles(playerIds, roleCounts);
+  /*
+  if (!) {
+    await interaction.reply(
+      `Can't start the role. Number playerIds: ${playerIds.length}. number roleCounts ${roleCounts.size}`
+    );
+    return;
+  }
+  */
+
+  /*
+  await interaction.reply(
+    `Starting a game with ${playerIds.length} players:\n${playersText}`
+  );
+  */
+
   const werewolfTeam = game.werewolves.map(id2username);
   const seerTeam = game.seers.map(id2username);
   const masonTeam = game.masons.map(id2username);
@@ -236,15 +254,12 @@ async function startGame(interaction: Discord.CommandInteraction) {
     } else if (playerState.role.id === "mason") {
       message += `\nThe masons are: ${masonTeam.join(" ")}`;
     }
+
     await dm.send(message);
   }
-
-  await interaction.reply(
-    `Starting a game with ${players?.size} players:\n${playersText}`
-  );
 }
 
-function night(interaction: Discord.CommandInteraction) {
+async function night(interaction: Discord.CommandInteraction) {
   interaction.reply("The night phase has begun.");
 
   game.werewolves.forEach(async (wolf) => {
@@ -258,12 +273,14 @@ function night(interaction: Discord.CommandInteraction) {
         ` uses the kill command the pointing phase will be skipped.`
     );
   });
-  game.seers.forEach(async (seer) => {
-    const dm = await client.users.cache.get(seer)?.createDM();
-    dm?.send(
-      `Use the /point command to point to the player you'd like to check.`
-    );
-  });
+
+  for (let [playerId, player] of game.players.entries()) {
+    if (player.role.nightlyAction) {
+      // @ts-ignore
+      const dm = await client.users.cache.get(playerId)?.createDM();
+      dm?.send("You must /point to a player for your action tonight.");
+    }
+  }
 
   game.beginNight();
 }

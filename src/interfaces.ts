@@ -12,6 +12,8 @@ export interface IRole {
   name: string;
   team: Team;
   description: string;
+  nightlyAction?: boolean;
+  firstNightAction?: boolean;
 }
 
 export interface IPlayerState {

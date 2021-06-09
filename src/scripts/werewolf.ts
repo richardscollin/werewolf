@@ -29,6 +29,25 @@ export class WerewolfStateMachine {
     this.isNight = false;
   }
 
+  info(client: any): string {
+    let infoMessage = "";
+    if (this.players.size === 0) {
+      infoMessage += "There are no players in the game.";
+    } else {
+      infoMessage += "Roles:\n";
+      for (let [playerId, playerState] of this.players.entries()) {
+        // @ts-ignore
+        const username = client.users.cache.get(playerId)?.username;
+        infoMessage += `${username}: ${playerState.role.name}\n`;
+      }
+      infoMessage += JSON.stringify(this.history, null, 2) + "\n";
+      if (this.currentNight) {
+        infoMessage += JSON.stringify(this.currentNight, null, 2);
+      }
+    }
+    return infoMessage;
+  }
+
   isGameOver(): boolean {
     return this.winningTeam() !== undefined;
   }
@@ -402,7 +421,7 @@ export class WerewolfStateMachine {
     }).filter((it) => it) as string[];
   }
 
-  id2Role(id: string) : Role  | undefined {
+  id2Role(id: string): Role | undefined {
     const roleId = this.players.get(id)?.role;
     return roleId ? Role.fromObject(roleId) : undefined;
   }
