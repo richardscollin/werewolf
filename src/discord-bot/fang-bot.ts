@@ -11,14 +11,9 @@ dotenv.config();
 const config = {
   botToken: process.env.DISCORD_BOT_TOKEN,
 };
-
-// The core game logic should be in the werewolf script
-// and implemented in a way that supports both the discord bot
-// and the website
 import { WerewolfStateMachine, roles, Role } from "../scripts/werewolf.js";
 const game = new WerewolfStateMachine("discord-game");
-
-import { commands, ModCommand, Command } from "./commands.js";
+import { commands, Command } from "./commands.js";
 
 // I'm using the beta api v13 which is unreleased (So I can use the slash command api)
 // You can find the docs here
@@ -29,22 +24,9 @@ const client = new Discord.Client({
 });
 
 client.once("ready", async () => {
-  console.log("fang-bot is ready");
+  console.log("fangbot is ready");
   await client.application?.commands.set(commands);
-  console.log("Global Commands updated");
-  /*
-  for (let [guildId, guild] of client.guilds.cache.entries()) {
-    console.log("Updating");
-    console.log(guild.name);
-    client.guilds.cache
-      .get(guildId)
-      ?.commands.set(commands)
-      .then(() => {
-        console.log("Updated commands");
-      })
-      .catch(console.error);
-  }
-  */
+  console.log("Commands updated");
 });
 
 client.on("interaction", async (interaction: Discord.Interaction) => {
@@ -61,85 +43,42 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
         interaction.reply("I'm sorry. I don't understand.");
         break;
 
-      case "help":
-        interaction.reply(
-          `The commands are: ${commands.map((c) => "/" + c.name).join(" ")}` +
-            ".\nThe supported roles are:\n" +
-            Array.from(roles.values())
-              .map((role: Role) => role.id)
-              .join("\n")
-        );
-        break;
-      case "kill":
-        interaction.reply("Okay I'll send you a DM");
-        break;
-
-      case "lynch":
-        break;
       case "point":
         point(interaction);
         break;
-      case "vote":
+      case "help":
+        interaction.reply("Looks like you need some help.");
         break;
-      case "zmod":
-        let mod = isModerator(interaction);
-        const subcommand = options[0].name;
-
-        if (subcommand !== "start" && interaction.user.id === game.mod) {
-          mod = true;
-        }
-
-        if (mod === undefined) {
-          interaction.reply(
-            "You are not the game moderator. (/zmod start must be run from a server channel)"
-          );
-          break;
-        } else if (!mod) {
-          interaction.reply(
-            "Sorry you can't run this command because you aren't assigned the moderator role."
-          );
-          break;
-        }
-
-        console.log(`Executing ${subcommand} subcommand`);
-        switch (subcommand as ModCommand) {
-          case "day": {
-            day(interaction);
-            break;
-          }
-          case "night": {
-            night(interaction);
-            break;
-          }
-          case "info": {
-            const infoMessage = game.info(client);
-            const dm = await interaction.user.createDM();
-            dm.send(infoMessage);
-            interaction.reply("DM'd");
-            break;
-          }
-          case "start": {
-            startGame(interaction);
-            const message = game.info(client);
-            const dm = await interaction.user.createDM();
-            dm.send(message);
-            break;
-          }
-        }
+      case "start": {
+        if (!isModerator(interaction, name)) break;
+        startGame(interaction);
+        const message = game.info(client);
+        const dm = await interaction.user.createDM();
+        dm.send(message);
         break;
+      }
+      case "day": {
+        if (!isModerator(interaction, name)) break;
+        day(interaction);
+        break;
+      }
+      case "night": {
+        if (!isModerator(interaction, name)) break;
+        night(interaction);
+        break;
+      }
     }
   }
 });
 
 client.on("message", (message) => {
-  // console.log({ message });
   console.log(`New message from ${message.author.username}`);
 });
-
 client.login(config.botToken);
 
 function isModerator(
-  interaction: Discord.CommandInteraction
+  interaction: Discord.CommandInteraction,
+  command: string
 ): boolean | undefined {
   /* If returns undefined then the command was likely launched from a pm and we can't determine
   if they are a mod. /zmod commands must be launched from the server / guild context.
@@ -149,9 +88,26 @@ function isModerator(
     return undefined;
   }
 
-  return Array.from((roles as GuildMemberRoleManager).cache.values(), (r) =>
+  let mod = Array.from((roles as GuildMemberRoleManager).cache.values(), (r) =>
     r.name.toLowerCase()
   ).includes("moderator");
+
+  if (command !== "start" && interaction.user.id === game.mod) {
+    mod = true;
+  }
+
+  if (mod === undefined) {
+    interaction.reply(
+      "You are not the game moderator. (/start must be run from a server channel)"
+    );
+    return false;
+  } else if (!mod) {
+    interaction.reply(
+      "Sorry you can't run this command because you aren't assigned the moderator role."
+    );
+    return false;
+  }
+  return true;
 }
 
 function parseRoleString(roleString: string): Map<string, number> | undefined {
@@ -207,12 +163,7 @@ async function startGame(interaction: Discord.CommandInteraction) {
 
   // don't include the mod as a player
   playerIds = playerIds.filter((id) => id != game.mod);
-
-  const id2username = (id: string) => {
-    // @ts-ignore
-    const user = client.users.cache.get(id);
-    return user?.username;
-  };
+  const id2username = (id: string) => id2user(client, id)?.username;
 
   let playersText = "";
   for (let playerId of playerIds) {
@@ -239,9 +190,8 @@ async function startGame(interaction: Discord.CommandInteraction) {
   const masonTeam = game.masons.map(id2username);
 
   for (let [playerId, playerState] of game.players) {
-    // @ts-ignore
-    const player = client.users.cache.get(playerId)!;
-    const dm = await player.createDM();
+    const player = id2user(client, playerId);
+    const dm = await player?.createDM();
     let message = `Your role is ${playerState.role.name}.\n`;
     message += playerState.role.description;
 
@@ -255,16 +205,14 @@ async function startGame(interaction: Discord.CommandInteraction) {
       message += `\nThe masons are: ${masonTeam.join(" ")}`;
     }
 
-    await dm.send(message);
+    await dm?.send(message);
   }
 }
 
 async function night(interaction: Discord.CommandInteraction) {
-  interaction.reply("The night phase has begun.");
-
+  await interaction.reply("The night phase has begun.");
   game.werewolves.forEach(async (wolf) => {
-    // @ts-ignore
-    const dm = await client.users.cache.get(wolf)?.createDM();
+    const dm = await id2user(client, wolf)?.createDM();
     dm?.send(
       `Waiting on you to point to a target using the /point command.` +
         `If all the wolves` +
@@ -276,8 +224,7 @@ async function night(interaction: Discord.CommandInteraction) {
 
   for (let [playerId, player] of game.players.entries()) {
     if (player.role.nightlyAction) {
-      // @ts-ignore
-      const dm = await client.users.cache.get(playerId)?.createDM();
+      const dm = await id2user(client, playerId)?.createDM();
       dm?.send("You must /point to a player for your action tonight.");
     }
   }
@@ -292,7 +239,7 @@ function day(interaction: Discord.CommandInteraction) {
 
 async function point(interaction: Discord.CommandInteraction) {
   const options = interaction.options;
-  const pointie = (options![0] as any).user as Discord.User;
+  const pointie = options[0].user as Discord.User;
 
   if (!game.isNight) {
     interaction.reply("Pointing is only allowed at night.");
@@ -315,9 +262,12 @@ async function point(interaction: Discord.CommandInteraction) {
 
   if (currentRole.isWerewolf()) {
     game.werewolves.forEach(async (wolf) => {
-      // @ts-ignore
-      const dm = await client.users.cache.get(wolf)?.createDM();
+      const dm = await id2user(client, wolf)?.createDM();
       dm?.send(`${interaction.user.username} pointed at ${pointie.username}.`);
     });
   }
+}
+
+function id2user(client: Discord.Client, id: string): Discord.User | undefined {
+  return client.users.cache.get(id as `${bigint}`);
 }
