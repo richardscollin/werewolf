@@ -6,7 +6,6 @@ import Discord, {
   GuildMemberRoleManager,
 } from "discord.js";
 import dotenv from "dotenv";
-import { StartGameEvent } from "../scripts/game-event.js";
 dotenv.config();
 const config = {
   botToken: process.env.DISCORD_BOT_TOKEN,
@@ -26,84 +25,91 @@ const client = new Discord.Client({
 client.once("ready", async () => {
   console.log("fangbot is ready");
   await client.application?.commands.set(commands);
+  client.guilds.cache.forEach(async (guild) => {
+    await guild?.commands.set(commands);
+  });
   console.log("Commands updated");
 });
 
 client.on("interaction", async (interaction: Discord.Interaction) => {
-  if (interaction.isCommand()) {
-    const commandInteraction = interaction as Discord.CommandInteraction;
-    const command = commandInteraction.command;
-    const options = commandInteraction.options;
-    const name = commandInteraction.commandName;
+  if (!interaction.isCommand()) {
+    console.warn("received non-command interaction.");
+    console.log("received non-command interaction.");
+    return;
+  }
 
-    console.log(`Executing ${name} command`);
-    switch (name as Command) {
-      default:
-        console.log(command);
-        interaction.reply("I'm sorry. I don't understand.");
-        break;
+  const commandInteraction = interaction as Discord.CommandInteraction;
+  const command = commandInteraction.command;
+  console.log(`Executing ${commandInteraction.commandName} command`);
+  switch (commandInteraction.commandName as Command) {
+    default:
+      console.log(command);
+      await commandInteraction.reply("I'm sorry. I don't understand.");
+      break;
 
-      case "point":
-        point(interaction);
-        break;
-      case "help":
-        interaction.reply("Looks like you need some help.");
-        break;
-      case "start": {
-        if (!isModerator(interaction, name)) break;
-        startGame(interaction);
-        const message = game.info(client);
-        const dm = await interaction.user.createDM();
-        dm.send(message);
+    case "point":
+      await point(commandInteraction);
+      break;
+
+    case "start": {
+      if (!moderatorCheck(commandInteraction)) {
         break;
       }
-      case "day": {
-        if (!isModerator(interaction, name)) break;
-        day(interaction);
+
+      let message = await startGame(commandInteraction);
+      const gameInfo = game.info(id2username);
+
+      if (gameInfo) {
+        message += gameInfo;
+      }
+      await secretReply(interaction, message);
+      break;
+    }
+    case "day": {
+      if (!moderatorCheck(commandInteraction)) {
         break;
       }
-      case "night": {
-        if (!isModerator(interaction, name)) break;
-        night(interaction);
+      await day(commandInteraction);
+      break;
+    }
+    case "night": {
+      if (!moderatorCheck(commandInteraction)) {
         break;
       }
+      await night(commandInteraction);
+      console.log(commandInteraction.replied);
+      break;
     }
   }
 });
 
 client.on("message", (message) => {
-  console.log(`New message from ${message.author.username}`);
+  console.log(
+    `New message from ${message.author.username} to ${message.channel}.`
+  );
 });
 client.login(config.botToken);
 
-function isModerator(
-  interaction: Discord.CommandInteraction,
-  command: string
-): boolean | undefined {
-  /* If returns undefined then the command was likely launched from a pm and we can't determine
-  if they are a mod. /zmod commands must be launched from the server / guild context.
-  */
+function isModerator(interaction: Discord.CommandInteraction): boolean {
   const roles = interaction.member?.roles;
-  if (roles === undefined) {
-    return undefined;
-  }
+  return (
+    interaction.user.id === game.mod ||
+    (roles !== undefined &&
+      Array.from((roles as GuildMemberRoleManager).cache.values(), (r) =>
+        r.name.toLowerCase()
+      ).includes("moderator"))
+  );
+}
 
-  let mod = Array.from((roles as GuildMemberRoleManager).cache.values(), (r) =>
-    r.name.toLowerCase()
-  ).includes("moderator");
-
-  if (command !== "start" && interaction.user.id === game.mod) {
-    mod = true;
-  }
-
-  if (mod === undefined) {
-    interaction.reply(
-      "You are not the game moderator. (/start must be run from a server channel)"
-    );
-    return false;
-  } else if (!mod) {
-    interaction.reply(
-      "Sorry you can't run this command because you aren't assigned the moderator role."
+async function moderatorCheck(
+  interaction: Discord.CommandInteraction
+): Promise<boolean> {
+  const isMod = isModerator(interaction);
+  console.log(`isMod: ${isMod}`);
+  if (!isMod) {
+    await secretReply(
+      interaction,
+      "You must be a moderator to run that command (or launch it from a server channel)."
     );
     return false;
   }
@@ -127,20 +133,16 @@ function parseRoleString(roleString: string): Map<string, number> | undefined {
   }
 }
 
-async function startGame(interaction: Discord.CommandInteraction) {
+async function startGame(interaction: Discord.CommandInteraction): Promise<string> {
   let roleCounts: Map<string, number> | undefined;
-
-  // @ts-ignore
-  const roleString = interaction.options[0].options[0].value as string;
+  const roleString = interaction.options.get("roles")?.value as string;
   roleCounts = parseRoleString(roleString);
   if (!roleCounts) {
     console.log(`Error in role string ${roleString}.`);
-    await interaction.reply("Sorry there's an error in the role string.");
-    return;
+    return "Sorry there's an error in the role string.";
   }
 
   game.mod = interaction.user.id;
-
   roleCounts = roleCounts!;
   console.log(roleCounts);
 
@@ -149,41 +151,30 @@ async function startGame(interaction: Discord.CommandInteraction) {
     (c) => c.name.toLowerCase().includes("town square") && !c.isText()
   )!;
   console.log(
-    `Using ${werewolfVoiceChannel.name} in ${werewolfVoiceChannel.guild.name}.`
+    `${interaction.user.username} started a game in ${werewolfVoiceChannel.guild.name} #${werewolfVoiceChannel.name}.`
   );
   const players = werewolfVoiceChannel.members;
   if (players.size === 0) {
-    await interaction.reply(`Error no players in the werewolf voice channel.`);
-    return;
+    return `Error no players in the werewolf voice channel.`;
   }
 
   let playerIds = Array.from(players.keys(), (id) => id.toString());
-  console.log(playerIds);
-  console.log(game.mod);
 
   // don't include the mod as a player
-  playerIds = playerIds.filter((id) => id != game.mod);
-  const id2username = (id: string) => id2user(client, id)?.username;
+  // playerIds = playerIds.filter((id) => id !== game.mod);
 
   let playersText = "";
   for (let playerId of playerIds) {
-    playersText += id2username(playerId) + " ";
+    playersText += `- ${id2username(playerId)}\n`;
   }
-  game.assignRoles(playerIds, roleCounts);
-  /*
-  if (!) {
-    await interaction.reply(
-      `Can't start the role. Number playerIds: ${playerIds.length}. number roleCounts ${roleCounts.size}`
+  const started = game.assignRoles(playerIds, roleCounts);
+  if (!started) {
+    return (
+      `Can't start the game. Number of players: ${playerIds.length}. Number of roles: ${roleCounts.size}.` +
+      "\nPlayers:\n" +
+      playersText
     );
-    return;
   }
-  */
-
-  /*
-  await interaction.reply(
-    `Starting a game with ${playerIds.length} players:\n${playersText}`
-  );
-  */
 
   const werewolfTeam = game.werewolves.map(id2username);
   const seerTeam = game.seers.map(id2username);
@@ -207,13 +198,26 @@ async function startGame(interaction: Discord.CommandInteraction) {
 
     await dm?.send(message);
   }
+
+  return `Starting a game with ${playerIds.length} players:\n${playersText}`;
 }
 
 async function night(interaction: Discord.CommandInteraction) {
-  await interaction.reply("The night phase has begun.");
+  console.log("in night");
+  console.log(interaction.replied);
+  if (!game.hasStarted) {
+    console.log("start a new game");
+    await secretReply(interaction, "Start a new game first.");
+    return;
+  }
+
+  console.log("the night phase has begun");
+  await interaction.reply("Starting the night phase.");
+
+  /*
   game.werewolves.forEach(async (wolf) => {
     const dm = await id2user(client, wolf)?.createDM();
-    dm?.send(
+    await dm?.send(
       `Waiting on you to point to a target using the /point command.` +
         `If all the wolves` +
         ` are pointing at the same player` +
@@ -225,31 +229,35 @@ async function night(interaction: Discord.CommandInteraction) {
   for (let [playerId, player] of game.players.entries()) {
     if (player.role.nightlyAction) {
       const dm = await id2user(client, playerId)?.createDM();
-      dm?.send("You must /point to a player for your action tonight.");
+      await dm?.send("You must /point to a player for your action tonight.");
     }
   }
+  */
 
   game.beginNight();
 }
 
 function day(interaction: Discord.CommandInteraction) {
-  interaction.reply("The night phase has begun.");
+  interaction.reply("Starting the day phase.");
   game.beginDay();
 }
 
 async function point(interaction: Discord.CommandInteraction) {
   const options = interaction.options;
-  const pointie = options[0].user as Discord.User;
+  const pointie = options.get("player")?.user as Discord.User;
 
   if (!game.isNight) {
-    interaction.reply("Pointing is only allowed at night.");
+    secretReply(interaction, "Pointing is only allowed at night.");
     return;
   }
 
   const currentRole = game.id2Role(interaction.user.id);
 
   if (currentRole === undefined) {
-    interaction.reply("You can only point when you have a role assigned.");
+    secretReply(
+      interaction,
+      "You can only point when you have a role assigned."
+    );
     return;
   }
 
@@ -258,7 +266,7 @@ async function point(interaction: Discord.CommandInteraction) {
     pointie.id,
     pointie.username
   );
-  interaction.reply(responseMessage);
+  secretReply(interaction, responseMessage);
 
   if (currentRole.isWerewolf()) {
     game.werewolves.forEach(async (wolf) => {
@@ -268,6 +276,16 @@ async function point(interaction: Discord.CommandInteraction) {
   }
 }
 
+async function secretReply(
+  interaction: Discord.CommandInteraction,
+  message: string
+) {
+  return interaction.reply({ ephemeral: true, content: message });
+}
+
 function id2user(client: Discord.Client, id: string): Discord.User | undefined {
   return client.users.cache.get(id as `${bigint}`);
+}
+function id2username(id: string): string | undefined {
+  return id2user(client, id)?.username;
 }

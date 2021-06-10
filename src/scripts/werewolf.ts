@@ -29,25 +29,6 @@ export class WerewolfStateMachine {
     this.isNight = false;
   }
 
-  info(client: any): string {
-    let infoMessage = "";
-    if (this.players.size === 0) {
-      infoMessage += "There are no players in the game.";
-    } else {
-      infoMessage += "Roles:\n";
-      for (let [playerId, playerState] of this.players.entries()) {
-        // @ts-ignore
-        const username = client.users.cache.get(playerId)?.username;
-        infoMessage += `${username}: ${playerState.role.name}\n`;
-      }
-      infoMessage += JSON.stringify(this.history, null, 2) + "\n";
-      if (this.currentNight) {
-        infoMessage += JSON.stringify(this.currentNight, null, 2);
-      }
-    }
-    return infoMessage;
-  }
-
   isGameOver(): boolean {
     return this.winningTeam() !== undefined;
   }
@@ -88,6 +69,7 @@ export class WerewolfStateMachine {
       newRoles.push(...Array(roleCount).fill(role)); // Note this is a shallow copy. Should be okay for now
     }
     if (playerIds.length !== acc) {
+      console.log("Warning: the numbers of players don't match up ");
       return false;
     }
 
@@ -421,8 +403,28 @@ export class WerewolfStateMachine {
     }).filter((it) => it) as string[];
   }
 
+  get hasStarted(): boolean {
+    return this.players.size > 0;
+  }
+
   id2Role(id: string): Role | undefined {
     const roleId = this.players.get(id)?.role;
     return roleId ? Role.fromObject(roleId) : undefined;
+  }
+
+  info(id2username: (s: string) => string | undefined): string | undefined {
+    if (this.players.size === 0) {
+      return undefined;
+    }
+    let infoMessage = "Roles:\n";
+    for (let [playerId, playerState] of this.players.entries()) {
+      const username = id2username(playerId);
+      infoMessage += `${username}: ${playerState.role.name}\n`;
+    }
+    infoMessage += JSON.stringify(this.history, null, 2) + "\n";
+    if (this.currentNight) {
+      infoMessage += JSON.stringify(this.currentNight, null, 2);
+    }
+    return infoMessage;
   }
 }
