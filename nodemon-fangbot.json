@@ -1,5 +1,0 @@
-{
-  "watch": "src",
-  "ext": "ts,json",
-  "exec": "node --loader ts-node/esm ./src/discord-bot/fang-bot.ts"
-}
