@@ -1,4 +1,9 @@
 
+export interface IVerb {
+  present: string;
+  past: string;
+}
+
 export interface IMessage {
   senderId: string;
   senderName: string;
@@ -12,6 +17,7 @@ export interface IRole {
   name: string;
   team: Team;
   description: string;
+  verb?: IVerb;
   nightlyAction?: boolean;
   firstNightAction?: boolean;
 }

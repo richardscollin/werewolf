@@ -1,16 +1,17 @@
-import { IRole, Team } from "../interfaces.js";
+import { IVerb, IRole, Team } from "../interfaces.js";
 
 export class Role {
   constructor(
     public id: string,
     public name: string,
     public team: Team,
-    public description: string
+    public description: string,
+    public verb: IVerb | undefined
   ) {}
 
   static fromObject(object: IRole) {
-    const { id, name, team, description } = object;
-    return new Role(id, name, team, description);
+    const { id, name, team, description, verb } = object;
+    return new Role(id, name, team, description, verb);
   }
 
   /*
@@ -35,6 +36,10 @@ export const rolesData: IRole[] = [
     name: "Angel",
     team: "villager",
     firstNightAction: true,
+    verb: {
+      present: "protect",
+      past: "protected",
+    },
     description:
       "On the first night, choose someone to protect. As long as you are alive, they cannot die. If lynched, they reveal their role and stay alive.",
   },
@@ -49,6 +54,10 @@ export const rolesData: IRole[] = [
     name: "Baker",
     team: "villager",
     nightlyAction: true,
+    verb: {
+      present: "give bread to",
+      past: "gave bread to",
+    },
     description:
       "Each night, choose a player to  receive some bread. Bread protects them from being lynched on the following day.",
   },
@@ -64,6 +73,10 @@ export const rolesData: IRole[] = [
     name: "Bodyguard",
     team: "villager",
     nightlyAction: true,
+    verb: {
+      present: "protect",
+      past: "protect",
+    },
     description:
       "Each night, choose a different player to protect. That player cannot be killed that night. You cannot pick the same player two nights in a row.",
   },
@@ -72,6 +85,10 @@ export const rolesData: IRole[] = [
     name: "Cupid",
     team: "villager",
     firstNightAction: true,
+    verb: {
+      present: "choose",
+      past: "chose",
+    },
     description:
       "On the first night, choose two players to be lovers. They will both know who their lover is. If one of those players dies, the other dies from a broken heart.",
   },
@@ -94,6 +111,10 @@ export const rolesData: IRole[] = [
     name: "Doppelgänger",
     team: undefined,
     firstNightAction: true,
+    verb: {
+      present: "dopplegang",
+      past: "doppleganged",
+    },
     description:
       "Select a player the first night. If that player dies, you secretly take over their role.",
   },
@@ -118,6 +139,7 @@ export const rolesData: IRole[] = [
     description:
       "If you are lynched, reveal your role and choose another player to die instead of you.",
   },
+  /*
   {
     id: "golem",
     name: "Golem",
@@ -132,6 +154,7 @@ export const rolesData: IRole[] = [
     description:
       "Indicate two players on the first night. If they die and you are alive at the end of the game, you win.",
   },
+  */
   {
     id: "hunter",
     name: "Hunter",
@@ -197,6 +220,10 @@ export const rolesData: IRole[] = [
     name: "Seer",
     team: "villager",
     nightlyAction: true,
+    verb: {
+      present: "check",
+      past: "checked",
+    },
     description:
       "Each night, you choose a player and learn if they are, a werewolf, a vampire, or on the villager team.",
   },
@@ -205,6 +232,10 @@ export const rolesData: IRole[] = [
     name: "Sorcerer",
     team: "werewolf",
     nightlyAction: true,
+    verb: {
+      present: "check",
+      past: "checked",
+    },
     description:
       "You are a seer, but you are on the Werewolf team. You only know if you've found a werewolf, another seer, or something else.",
   },
@@ -213,6 +244,10 @@ export const rolesData: IRole[] = [
     name: "Spellcaster",
     team: "villager",
     nightlyAction: true,
+    verb: {
+      present: "silence",
+      past: "silenced",
+    },
     description:
       "At night, indicate a player who must not use their voice the following day.",
   },
@@ -261,6 +296,10 @@ export const rolesData: IRole[] = [
     name: "Whore",
     team: "villager",
     nightlyAction: true,
+    verb: {
+      present: "sleep with",
+      past: "slept with",
+    },
     description:
       "Each night, choose a player to sleep with. If you choose a werewolf, a vampire, or their victim, you die. If the werewolves or vampires target you at night, you don’t die - you weren’t home.",
   },

@@ -407,6 +407,10 @@ export class WerewolfStateMachine {
     return this.players.size > 0;
   }
 
+  get isFirstNight(): boolean {
+    return this.isNight && this.history.length === 0;
+  }
+
   id2Role(id: string): Role | undefined {
     const roleId = this.players.get(id)?.role;
     return roleId ? Role.fromObject(roleId) : undefined;
@@ -425,6 +429,24 @@ export class WerewolfStateMachine {
     if (this.currentNight) {
       infoMessage += JSON.stringify(this.currentNight, null, 2);
     }
+
+    if (this.currentNight) {
+      infoMessage += "\nUpdates:";
+
+      for (let event of this.currentNight.events) {
+        // TODO werewolf pointing should be handled slightly differently
+
+        const pointerRole = this.id2Role(event.clientId);
+        const verb = pointerRole?.verb?.past ?? "pointed at";
+        const pointieName = id2username(event.at);
+
+        infoMessage += `\nThe ${pointerRole} (${id2username(
+          event.clientId
+        )}) ${verb} ${pointieName}.`;
+      }
+
+    }
+
     return infoMessage;
   }
 }
