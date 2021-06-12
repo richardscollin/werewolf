@@ -138,7 +138,7 @@ export class WerewolfStateMachine {
       if (sameTargetCount === numWolves) {
         // TODO notify wolves
         this.currentNight.events.push({
-          action: "eat",
+          action: "kill",
           clientId: p1Id, // this can be ignored
           at: p2Id,
         });
@@ -363,7 +363,7 @@ export class WerewolfStateMachine {
   }
 
   nightActionsCompleted(): boolean {
-    return this.nightWaitingOn().length !== 0;
+    return this.nightWaitingOn().length === 0;
   }
 
   nightWaitingOn(): string[] {
@@ -391,8 +391,6 @@ export class WerewolfStateMachine {
   }
 
   beginDay(): string {
-    // First check all of the required night actions have been submitted
-
     if (!this.nightActionsCompleted()) {
       const waitingOn = this.nightWaitingOn().map(this.id2username).join("\n");
       return `Not all players have completed their night actions. Still waiting on:\n${waitingOn}`;
@@ -400,23 +398,77 @@ export class WerewolfStateMachine {
 
     this.isNight = false;
 
+    const newDead: string[] = [];
+    const deadStack: string[] = []; // for dealing with recursive kills
+    const finalDeathList: string[] = [];
+
     const kills = this.currentNight?.events.filter((e) => e.action === "kill");
     kills?.forEach((kill) => {
       const targetId = kill.at;
       const target = this.players.get(targetId)!;
 
-      if (
-        !target.bodyguardProtected &&
-        !(target.hasAmulate && this.history.length <= 2) // TODO double check obo
-      ) {
-        target;
+      // Here's the logic for getting killed by werewolf
+      // the bodyguard can protect you from the werewolf
+      if (!target.bodyguardProtected) {
+        deadStack.push(targetId);
       }
     });
 
+    while (deadStack.length > 0) {
+      const targetId = deadStack.pop()!;
+      const target = this.players.get(targetId)!;
+
+      // Logic for recursive killing
+      // TODO shorten this code if it's functionally correct
+      const protectedByAngel = (target: IPlayerState): boolean => {
+        if (target.angelProtected === undefined) return false;
+
+        const angel = this.players.get(target.angelProtected)!;
+        if (angel.alive) {
+          return true;
+        }
+
+        return false;
+      };
+
+      if (
+        !(target.hasAmulate && this.history.length <= 2) &&
+        !protectedByAngel(target)
+      ) {
+        // kill target
+        target.alive = false;
+        finalDeathList.push(targetId);
+
+        if (target.cupidLover) {
+          deadStack.push(target.cupidLover);
+        }
+
+        if (target.whoreSleepover) {
+          deadStack.push(target.whoreSleepover);
+        }
+
+        if (target.dopplegangedPlayer) {
+          const doppleganger = this.players.get(target.dopplegangedPlayer)!;
+          doppleganger.role = target.role;
+          // TODO somehow notify the doppleganger of their new role in a better way
+        }
+      }
+    }
+
+    const infoMessage = this.info();
+
+    let deathMessage = "";
+    if (finalDeathList.length === 0) {
+      deathMessage = "Begining day phase. Last night no one died.";
+    } else {
+      deathMessage =
+        "Begining day phase. Last night the following players died:\n" +
+        finalDeathList.map(this.id2username).join("\n");
+    }
+
     this.history.push(this.currentNight!);
     this.currentNight = undefined;
-
-    return "Begining day phase.";
+    return deathMessage + "\n\n" + infoMessage;
   }
 
   get werewolves(): string[] {
@@ -465,10 +517,13 @@ export class WerewolfStateMachine {
       const username = this.id2username(playerId);
       infoMessage += `${username}: ${playerState.role.name}\n`;
     }
+
+    /*
     infoMessage += JSON.stringify(this.history, null, 2) + "\n";
     if (this.currentNight) {
       infoMessage += JSON.stringify(this.currentNight, null, 2);
     }
+    */
 
     if (this.currentNight) {
       infoMessage += "\nUpdates:";
@@ -480,9 +535,13 @@ export class WerewolfStateMachine {
         const verb = pointerRole?.verb?.past ?? "pointed at";
         const pointieName = this.id2username(event.at);
 
-        infoMessage += `\nThe ${pointerRole} (${this.id2username(
-          event.clientId
-        )}) ${verb} ${pointieName}.`;
+        if (event.action === "kill") {
+          infoMessage += `\nThe Werewolves want to kill ${pointieName}.`;
+        } else if (!pointerRole?.isWerewolf()) {
+          infoMessage += `\nThe ${pointerRole?.name} (${this.id2username(
+            event.clientId
+          )}) ${verb} ${pointieName}.`;
+        }
       }
     }
 
