@@ -7,6 +7,7 @@
   "scripts": {
     "build": "webpack",
     "build-server": "tsc",
+    "test": "node --loader ts-node/esm ./src/scripts/werewolf-tests.ts",
     "dev": "nodemon --config nodemon-dev.json",
     "fangbot": "nodemon --config nodemon-fangbot.json"
   },
@@ -19,12 +20,14 @@
     "express": "^4.17.1",
     "mediasoup": "^3.7.12",
     "mediasoup-client": "^3.6.31",
+    "seedrandom": "^3.0.5",
     "utf-8-validate": "^5.0.5",
     "uuid": "^8.3.2",
     "ws": "^7.4.6"
   },
   "devDependencies": {
     "@types/express": "^4.17.12",
+    "@types/seedrandom": "^3.0.0",
     "@types/uuid": "^8.3.0",
     "nodemon": "^2.0.7",
     "ts-loader": "^9.2.3",

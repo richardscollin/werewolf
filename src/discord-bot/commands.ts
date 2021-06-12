@@ -42,7 +42,7 @@ export const commands: Discord.ApplicationCommandData[] = [
         name: "roles",
         description:
           "A space or command seperated list containing the number of each role to use",
-        required: false,
+        required: true,
         type: "STRING",
       },
       {

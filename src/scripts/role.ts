@@ -149,7 +149,6 @@ export const rolesData: IRole[] = [
     description:
       "If you are lynched, reveal your role and choose another player to die instead of you.",
   },
-  /*
   {
     id: "golem",
     name: "Golem",
@@ -161,10 +160,10 @@ export const rolesData: IRole[] = [
     id: "hoodlum",
     name: "Hoodlum",
     team: undefined,
+    firstNightAction: true,
     description:
       "Indicate two players on the first night. If they die and you are alive at the end of the game, you win.",
   },
-  */
   {
     id: "hunter",
     name: "Hunter",

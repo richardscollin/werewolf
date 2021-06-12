@@ -25,7 +25,8 @@ export class WerewolfStateMachine {
 
   constructor(
     public gameId: string,
-    public id2username: (id: string) => string | undefined
+    public id2username: (id: string) => string | undefined,
+    public seed: string | undefined
   ) {
     this.players = new Map<ClientId, IPlayerState>();
     this.history = [];
@@ -76,7 +77,7 @@ export class WerewolfStateMachine {
       return false;
     }
 
-    shuffleArray(playerIds);
+    shuffleArray(playerIds, this.seed);
     for (let i = 0; i < playerIds.length; i++) {
       this.players.set(playerIds[i], {
         role: newRoles[i],
@@ -98,12 +99,13 @@ export class WerewolfStateMachine {
 
   returns a message to display to the pointer
   */
-  playerPointsToPlayer(p1Id: string, p2Id: string, p2Name: string): string {
+  playerPointsToPlayer(p1Id: string, p2Id: string): string {
     const isFirstNight = this.history.length === 0;
     if (this.currentNight === undefined) {
       return "You must perform the action at night.";
     }
 
+    const p2Name = this.id2username(p2Id)!;
     const checkingPlayerState = this.players.get(p1Id);
     const checkedPlayerState = this.players.get(p2Id);
     if (checkingPlayerState === undefined || checkedPlayerState === undefined) {
@@ -512,10 +514,11 @@ export class WerewolfStateMachine {
     if (this.players.size === 0) {
       return undefined;
     }
-    let infoMessage = "Roles:\n";
+    let infoMessage = "\nRoles:\n";
     for (let [playerId, playerState] of this.players.entries()) {
       const username = this.id2username(playerId);
-      infoMessage += `${username}: ${playerState.role.name}\n`;
+      const deadString = playerState.alive ? "" : " (Dead)"
+      infoMessage += `${username}${deadString}: ${playerState.role.name}\n`;
     }
 
     /*
@@ -525,9 +528,10 @@ export class WerewolfStateMachine {
     }
     */
 
-    if (this.currentNight) {
+    if ((this.currentNight?.events?.length ?? 0) !== 0) {
       infoMessage += "\nUpdates:";
 
+      // @ts-ignore
       for (let event of this.currentNight.events) {
         // TODO werewolf pointing should be handled slightly differently
 
@@ -543,6 +547,11 @@ export class WerewolfStateMachine {
           )}) ${verb} ${pointieName}.`;
         }
       }
+    }
+
+    if (this.isGameOver()) {
+      infoMessage += "\nGame Over.";
+      infoMessage += `\nThe ${this.winningTeam()} team has won!`;
     }
 
     return infoMessage;

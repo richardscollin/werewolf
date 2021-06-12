@@ -10,7 +10,7 @@ import {
   Role,
   IPlayerState,
 } from "../scripts/werewolf.js";
-const game = new WerewolfStateMachine("discord-game", id2username);
+const game = new WerewolfStateMachine("discord-game", id2username, undefined);
 import { commands, Command } from "./commands.js";
 
 // I'm using the beta api v13 which is unreleased (So I can use the slash command api)
@@ -64,13 +64,19 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
         break;
       }
 
+      await secretReply(
+        interaction,
+        "Starting game ... (Message will update after all players are DM'ed)"
+      );
+
       let message = await startGame(commandInteraction);
       const gameInfo = game.info();
 
       if (gameInfo) {
         message += "\n" + gameInfo;
       }
-      await secretReply(interaction, message);
+
+      await interaction.editReply(message);
       break;
     }
     case "day": {
@@ -151,19 +157,21 @@ async function startGame(
   const includeGM = interaction.options.get("include-gm")?.value as
     | boolean
     | undefined;
+
+  console.log(`includeGM: ${includeGM}`);
   const cm = interaction.guild!.channels.cache;
   const werewolfVoiceChannel = cm.find(
     (c) => c.name.toLowerCase().includes("town square") && !c.isText()
   )!;
+  //(c.name.toLowerCase().includes("town square") && !c.isText())
 
   if (werewolfVoiceChannel === undefined) {
     return "Unable to find a werewolf enabled voice channel.";
   }
 
   let players = werewolfVoiceChannel.members;
-
-  if (!includeGM) {
-    players = players.filter((player) => player.id !== game.mod);
+  if (includeGM !== true) {
+    players = players.filter((player) => player.id !== interaction.user.id);
   }
 
   const playerIds = Array.from(players.keys(), (id) => id.toString());
@@ -171,28 +179,13 @@ async function startGame(
     .map((playerId) => `- ${id2username(playerId)}`)
     .join("\n");
 
-  let roleString = interaction.options.get("roles")?.value as
-    | string
-    | undefined;
-  if (roleString === undefined) {
-    if (players.size === 1) {
-      roleString = "werewolf,1";
-    } else if (players.size <= 8) {
-      roleString = `seer,1 werewolf,1 villager,${players.size - 2}`;
-    } else if (players.size <= 11) {
-      roleString = `seer,1 werewolf,2 villager,${players.size - 3}`;
-    } else if (players.size <= 15) {
-      roleString = `seer,1 werewolf,3 villager,${players.size - 4}`;
-    }
-  }
-
+  let roleString = interaction.options.get("roles")?.value as string;
   let roleCounts = parseRoleString(roleString);
   if (!roleCounts) {
     console.log(`Error in role string ${roleString}.`);
     return "Sorry there's an error in the role string.";
   }
 
-  game.mod = interaction.user.id;
   console.log(roleCounts);
   console.log(
     `${interaction.user.username} started a game in ${werewolfVoiceChannel.guild.name} #${werewolfVoiceChannel.name}.`
@@ -201,6 +194,7 @@ async function startGame(
     return `Error no players in the werewolf voice channel.`;
   }
 
+  game.mod = interaction.user.id;
   const started = game.assignRoles(playerIds, roleCounts);
   if (!started) {
     let acc = Array.from(roleCounts.values()).reduce((a, b) => a + b, 0);
@@ -211,9 +205,9 @@ async function startGame(
     );
   }
 
-  const werewolfTeam = game.werewolves.map(id2username).join("\n");
-  const seerTeam = game.seers.map(id2username).join("\n");
-  const masonTeam = game.masons.map(id2username).join("\n");
+  const werewolfTeam = game.werewolves.map(id2username).join("\n") || "No one";
+  const seerTeam = game.seers.map(id2username).join("\n") || "No one";
+  const masonTeam = game.masons.map(id2username).join("\n") || "No one";
 
   for (let [playerId, playerState] of game.players) {
     const player = id2user(client, playerId)!;
@@ -284,11 +278,7 @@ async function point(
     return;
   }
 
-  const responseMessage = game.playerPointsToPlayer(
-    pointerId,
-    pointie.id,
-    pointie.username
-  );
+  const responseMessage = game.playerPointsToPlayer(pointerId, pointie.id);
   secretReply(interaction, responseMessage);
 
   if (currentRole.isWerewolf()) {
@@ -333,20 +323,20 @@ async function sendRole(
     extra = {
       name: "Werewolves",
       value: werewolfTeam,
-      inline: true,
+      inline: false,
     };
   }
   if (role.id === "beholder") {
     extra = {
       name: "Seer",
       value: seerTeam,
-      inline: true,
+      inline: false,
     };
   } else if (role.id === "mason") {
     extra = {
       name: "Masons",
       value: masonTeam,
-      inline: true,
+      inline: false,
     };
   }
   if (extra) {
@@ -361,5 +351,6 @@ async function sendRole(
   });
 
   const dm = await player?.createDM();
+
   await dm?.send({ embed: roleEmbed });
 }
