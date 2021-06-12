@@ -23,7 +23,10 @@ export class WerewolfStateMachine {
   currentNight?: INight;
   isNight: boolean;
 
-  constructor(public gameId: string) {
+  constructor(
+    public gameId: string,
+    public id2username: (id: string) => string | undefined
+  ) {
     this.players = new Map<ClientId, IPlayerState>();
     this.history = [];
     this.isNight = false;
@@ -359,7 +362,42 @@ export class WerewolfStateMachine {
     this.currentNight = { events: [] };
   }
 
-  beginDay() {
+  nightActionsCompleted(): boolean {
+    return this.nightWaitingOn().length !== 0;
+  }
+
+  nightWaitingOn(): string[] {
+    const waitingOn: string[] = [];
+    const hasPerformedAction = (playerId: string) =>
+      undefined !==
+      this.currentNight?.events.find((p) => p.clientId === playerId);
+
+    for (let [playerId, playerState] of this.players.entries()) {
+      const role = playerState.role;
+      if (playerState.alive) {
+        if (role.nightlyAction && !hasPerformedAction(playerId)) {
+          waitingOn.push(playerId);
+        } else if (
+          role.firstNightAction &&
+          this.isFirstNight &&
+          !hasPerformedAction(playerId)
+        ) {
+          waitingOn.push(playerId);
+        }
+      }
+    }
+
+    return waitingOn;
+  }
+
+  beginDay(): string {
+    // First check all of the required night actions have been submitted
+
+    if (!this.nightActionsCompleted()) {
+      const waitingOn = this.nightWaitingOn().map(this.id2username).join("\n");
+      return `Not all players have completed their night actions. Still waiting on:\n${waitingOn}`;
+    }
+
     this.isNight = false;
 
     const kills = this.currentNight?.events.filter((e) => e.action === "kill");
@@ -377,6 +415,8 @@ export class WerewolfStateMachine {
 
     this.history.push(this.currentNight!);
     this.currentNight = undefined;
+
+    return "Begining day phase.";
   }
 
   get werewolves(): string[] {
@@ -416,13 +456,13 @@ export class WerewolfStateMachine {
     return roleId ? Role.fromObject(roleId) : undefined;
   }
 
-  info(id2username: (s: string) => string | undefined): string | undefined {
+  info(): string | undefined {
     if (this.players.size === 0) {
       return undefined;
     }
     let infoMessage = "Roles:\n";
     for (let [playerId, playerState] of this.players.entries()) {
-      const username = id2username(playerId);
+      const username = this.id2username(playerId);
       infoMessage += `${username}: ${playerState.role.name}\n`;
     }
     infoMessage += JSON.stringify(this.history, null, 2) + "\n";
@@ -438,13 +478,12 @@ export class WerewolfStateMachine {
 
         const pointerRole = this.id2Role(event.clientId);
         const verb = pointerRole?.verb?.past ?? "pointed at";
-        const pointieName = id2username(event.at);
+        const pointieName = this.id2username(event.at);
 
-        infoMessage += `\nThe ${pointerRole} (${id2username(
+        infoMessage += `\nThe ${pointerRole} (${this.id2username(
           event.clientId
         )}) ${verb} ${pointieName}.`;
       }
-
     }
 
     return infoMessage;

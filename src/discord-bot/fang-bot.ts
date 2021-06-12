@@ -10,7 +10,7 @@ import {
   Role,
   IPlayerState,
 } from "../scripts/werewolf.js";
-const game = new WerewolfStateMachine("discord-game");
+const game = new WerewolfStateMachine("discord-game", id2username);
 import { commands, Command } from "./commands.js";
 
 // I'm using the beta api v13 which is unreleased (So I can use the slash command api)
@@ -65,7 +65,7 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
       }
 
       let message = await startGame(commandInteraction);
-      const gameInfo = game.info(id2username);
+      const gameInfo = game.info();
 
       if (gameInfo) {
         message += "\n" + gameInfo;
@@ -232,25 +232,16 @@ async function night(interaction: Discord.CommandInteraction) {
   console.log("Starting the night phase.");
   await interaction.reply("Starting the night phase.");
 
-  game.werewolves.forEach(async (wolf) => {
-    const dm = await id2user(client, wolf)?.createDM();
-    await dm?.send(
-      `Waiting on you to point to a target using the /point command.` +
-        `If all the wolves` +
-        ` are pointing at the same player` +
-        ` then they will be eaten. If the alpha wolf` +
-        ` uses the kill command the pointing phase will be skipped.`
-    );
-  });
-
   for (let [playerId, player] of game.players.entries()) {
     if (
       player.role.nightlyAction ||
       (player.role.firstNightAction && game.isFirstNight)
     ) {
       const dm = await id2user(client, playerId)?.createDM();
+
       await dm?.send(
-        "You must /point to player to use your action tonight. You have to run the command from a channel in the server and NOT in this direct message."
+        `/point to the player you would like to ${player.role.verb?.present}.` +
+          "You have to run the command from a channel in the server and NOT in this direct message."
       );
     }
   }
@@ -258,9 +249,9 @@ async function night(interaction: Discord.CommandInteraction) {
   game.beginNight();
 }
 
-function day(interaction: Discord.CommandInteraction) {
-  interaction.reply("Starting the day phase.");
-  game.beginDay();
+async function day(interaction: Discord.CommandInteraction) {
+  const message = game.beginDay();
+  await secretReply(interaction, message);
 }
 
 async function pointAs(interaction: Discord.CommandInteraction) {

@@ -28,6 +28,11 @@ export const rolesData: IRole[] = [
     id: "alpha-wolf",
     name: "Alpha Wolf",
     team: "werewolf",
+    nightlyAction: true,
+    verb: {
+      present: "eat",
+      past: "ate",
+    },
     description:
       "You are a werewolf, but you appear to be a villager to the seer(s).",
   },
@@ -122,6 +127,11 @@ export const rolesData: IRole[] = [
     id: "dream-wolf",
     name: "Dream Wolf",
     team: "werewolf",
+    nightlyAction: true,
+    verb: {
+      present: "eat",
+      past: "ate",
+    },
     description:
       "If a werewolf dies, you replace them (you're not allowed to wake up until a werewolf dies.)",
   },
@@ -171,6 +181,11 @@ export const rolesData: IRole[] = [
     id: "lone-wolf",
     name: "Lone Wolf",
     team: "werewolf",
+    nightlyAction: true,
+    verb: {
+      present: "eat",
+      past: "ate",
+    },
     description:
       "You are a werewolf, but you only win if you are the last wolf team member alive.",
   },
@@ -212,6 +227,7 @@ export const rolesData: IRole[] = [
     id: "poison-wolf",
     name: "Poison Wolf",
     team: "werewolf",
+    nightlyAction: true,
     description:
       'You are a werewolf. Each night, choose a different player to poison. If they have a night power, it malfunctions." Prince, "You can\'t be lynched. If the town votes to lynch you, reveal your role and stay alive.',
   },
@@ -268,6 +284,10 @@ export const rolesData: IRole[] = [
     name: "Vampire",
     team: "vampire",
     nightlyAction: true,
+    verb: {
+      present: "eat",
+      past: "ate",
+    },
     description:
       "Choose a player to kill each night. You win if all of the werewolves are dead and you are still alive.",
   },
@@ -281,6 +301,11 @@ export const rolesData: IRole[] = [
     id: "werewolf-hunter",
     name: "Werewolf Hunter",
     team: "werewolf",
+    nightlyAction: true,
+    verb: {
+      present: "eat",
+      past: "ate",
+    },
     description:
       "You are a werewolf. If you are killed, take someone down with you.",
   },
@@ -288,6 +313,11 @@ export const rolesData: IRole[] = [
     id: "werewolf",
     name: "Werewolf",
     team: "werewolf",
+    nightlyAction: true,
+    verb: {
+      present: "eat",
+      past: "ate",
+    },
     description:
       "Eat a villager each night. All the werewolves must agree on a target, or else the moderator will let the Alpha Wolf decide.",
   },
@@ -307,6 +337,11 @@ export const rolesData: IRole[] = [
     id: "wolf-cub",
     name: "Wolf Cub",
     team: "werewolf",
+    nightlyAction: true,
+    verb: {
+      present: "eat",
+      past: "ate",
+    },
     description:
       "You are a werewolf. If you die, the werewolves get two kills the following night.",
   },
@@ -314,6 +349,11 @@ export const rolesData: IRole[] = [
     id: "zombie-wolf",
     name: "Zombie Wolf",
     team: "werewolf",
+    nightlyAction: true,
+    verb: {
+      present: "eat",
+      past: "ate",
+    },
     description:
       "You are a werewolf. Once per game, choose a player to become a werewolf.",
   },
