@@ -27,6 +27,7 @@ client.once("ready", async () => {
   // await client.application?.commands.set(commands);
   await client.application?.commands.set([]);
   client.guilds.cache.forEach(async (guild) => {
+    console.log(guild.id);
     await guild?.commands.set(commands);
   });
   console.log("Commands updated");
@@ -278,8 +279,8 @@ async function point(
     return;
   }
 
-  const responseMessage = game.playerPointsToPlayer(pointerId, pointie.id);
-  secretReply(interaction, responseMessage);
+  const pointResult = game.playerPointsToPlayer(pointerId, pointie.id);
+  secretReply(interaction, pointResult.message);
 
   if (currentRole.isWerewolf()) {
     game.werewolves.forEach(async (wolf) => {

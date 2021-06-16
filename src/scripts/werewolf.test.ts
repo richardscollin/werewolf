@@ -31,18 +31,23 @@ test("Simple Test", () => {
   game.beginNight();
   console.log(game.info());
 
-  game.playerPointsToPlayer("8", "2");
-  game.playerPointsToPlayer("1", "3");
+  const p1 = game.playerPointsToPlayer("8", "2");
+  const p2 = game.playerPointsToPlayer("1", "3");
 
-  const dayMessage = game.beginDay();
-  console.log(dayMessage);
-  console.log(game.info());
+  expect(p1.pointer?.role.id).toBe("werewolf");
+  expect(p2.pointer?.role.id).toBe("seer");
+
+  let dayResult = game.beginDay();
+  expect(dayResult.success).toBe(true);
+  expect(dayResult.newDead?.length).toBe(1);
 
   game.beginNight();
 
-  console.log(game.playerPointsToPlayer("1", "8"));
-  game.playerPointsToPlayer("8", "3");
+  const p3 = game.playerPointsToPlayer("1", "8");
+  const p4 = game.playerPointsToPlayer("8", "3");
 
-  console.log(game.info());
-  expect(1).toBe(1);
+  dayResult = game.beginDay();
+  expect(dayResult.success).toBe(true);
+  expect(dayResult.newDead?.length).toBe(1);
+
 });

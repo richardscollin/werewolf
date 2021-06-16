@@ -16,7 +16,8 @@ class WerewolfServer extends GameServer {
     switch (gameEvent.eventType) {
       case "start-game":
         const gameId: GameId = uuidv4();
-        const stateMachine = new WerewolfStateMachine(gameId);
+        function dummy(id:string): string { return ""}
+        const stateMachine = new WerewolfStateMachine(gameId, dummy, "seed");
         this.games.set(gameId, stateMachine);
 
         const scenario = new Map([

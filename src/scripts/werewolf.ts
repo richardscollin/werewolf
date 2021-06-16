@@ -1,6 +1,6 @@
 import { shuffleArray } from "./utils.js";
 import { Role, roles } from "./role.js";
-import { Team, IPlayerState } from "../interfaces.js";
+import { Team, IPointResult, IPlayerState, IDayResult } from "../interfaces.js";
 import { DiscordAPIError } from "discord.js";
 export { Role, IPlayerState, Team, roles };
 export type ClientId = string;
@@ -99,18 +99,25 @@ export class WerewolfStateMachine {
 
   returns a message to display to the pointer
   */
-  playerPointsToPlayer(p1Id: string, p2Id: string): string {
+
+  playerPointsToPlayer(p1Id: string, p2Id: string): IPointResult {
     const isFirstNight = this.history.length === 0;
     if (this.currentNight === undefined) {
-      return "You must perform the action at night.";
+      return {
+        success: false,
+        message: "You must perform the action at night.",
+      };
     }
 
     const p2Name = this.id2username(p2Id)!;
     const checkingPlayerState = this.players.get(p1Id);
     const checkedPlayerState = this.players.get(p2Id);
     if (checkingPlayerState === undefined || checkedPlayerState === undefined) {
-      const error = `Error: Can't determine role for you or the player you pointed to.`;
-      return error;
+      return {
+        success: false,
+        message:
+          "Error: Can't determine role for you or the player you pointed to.",
+      };
     }
 
     const checkingRole = Role.fromObject(checkingPlayerState.role);
@@ -145,14 +152,21 @@ export class WerewolfStateMachine {
           at: p2Id,
         });
       }
-
-      return `You want to eat ${p2Name}.`;
+      return {
+        success: true,
+        message: `You want to eat ${p2Name}.`,
+        pointer: checkingPlayerState,
+        pointie: checkedPlayerState,
+      };
     }
 
     // TODO
     // first check if player has already pointed this night
     if (this.playerHasPointedTonight(p1Id)) {
-      return "Sorry you've already done an action tonight.";
+      return {
+        success: false,
+        message: "Sorry you've already done an action tonight.",
+      };
     }
 
     switch (checkingRole.id) {
@@ -324,7 +338,12 @@ export class WerewolfStateMachine {
         break;
     }
 
-    return messageText;
+    return {
+      success: true,
+      message: messageText,
+      pointer: checkingPlayerState,
+      pointie: checkedPlayerState,
+    };
   }
 
   preventRepeatedTarget(pointer: string, pointie: string): boolean {
@@ -392,10 +411,15 @@ export class WerewolfStateMachine {
     return waitingOn;
   }
 
-  beginDay(): string {
+  beginDay(): IDayResult {
     if (!this.nightActionsCompleted()) {
-      const waitingOn = this.nightWaitingOn().map(this.id2username).join("\n");
-      return `Not all players have completed their night actions. Still waiting on:\n${waitingOn}`;
+      const waitingList = this.nightWaitingOn();
+      const waitingOn = waitingList.map(this.id2username).join("\n");
+      return {
+        success: false,
+        message: `Not all players have completed their night actions. Still waiting on:\n${waitingOn}`,
+        waitList: waitingList,
+      };
     }
 
     this.isNight = false;
@@ -470,7 +494,12 @@ export class WerewolfStateMachine {
 
     this.history.push(this.currentNight!);
     this.currentNight = undefined;
-    return deathMessage + "\n\n" + infoMessage;
+
+    return {
+      success: true,
+      message: deathMessage + "\n\n" + infoMessage,
+      newDead: finalDeathList,
+    };
   }
 
   get werewolves(): string[] {
@@ -517,7 +546,7 @@ export class WerewolfStateMachine {
     let infoMessage = "\nRoles:\n";
     for (let [playerId, playerState] of this.players.entries()) {
       const username = this.id2username(playerId);
-      const deadString = playerState.alive ? "" : " (Dead)"
+      const deadString = playerState.alive ? "" : " (Dead)";
       infoMessage += `${username}${deadString}: ${playerState.role.name}\n`;
     }
 
