@@ -27,21 +27,22 @@ game.assignRoles(
   ])
 );
 
-game.beginNight();
-console.log(game.info());
+test("Simple Test", () => {
+  game.beginNight();
+  console.log(game.info());
 
-game.playerPointsToPlayer("8", "2");
-game.playerPointsToPlayer("1", "3");
+  game.playerPointsToPlayer("8", "2");
+  game.playerPointsToPlayer("1", "3");
 
-const dayMessage = game.beginDay();
-console.log(dayMessage);
-console.log(game.info());
+  const dayMessage = game.beginDay();
+  console.log(dayMessage);
+  console.log(game.info());
 
-game.beginNight();
+  game.beginNight();
 
-console.log(game.playerPointsToPlayer("1", "8"));
-game.playerPointsToPlayer("8", "3");
+  console.log(game.playerPointsToPlayer("1", "8"));
+  game.playerPointsToPlayer("8", "3");
 
-console.log(game.info())
-
-
+  console.log(game.info());
+  expect(1).toBe(1);
+});
