@@ -1,7 +1,5 @@
 import { WerewolfStateMachine, roles, Role, IPlayerState } from "./werewolf.js";
 
-console.log("Running tests.");
-
 const users = new Map([
   ["1", "alice"],
   ["2", "bob"],
@@ -13,19 +11,17 @@ const users = new Map([
   ["8", "helios"],
 ]);
 
+const roleMap = new Map([
+  ["werewolf", 1],
+  ["seer", 1],
+  ["villager", 6],
+]);
+
 function id2username(id: string): string | undefined {
   return users.get(id);
 }
-const game = new WerewolfStateMachine("game-id", id2username, "test-seed");
-
-game.assignRoles(
-  Array.from(users.keys()),
-  new Map([
-    ["werewolf", 1],
-    ["seer", 1],
-    ["villager", 6],
-  ])
-);
+let game = new WerewolfStateMachine("game-id", id2username, "test-seed");
+game.assignRoles(Array.from(users.keys()), roleMap);
 
 test("Simple Test", () => {
   game.beginNight();
@@ -49,5 +45,12 @@ test("Simple Test", () => {
   dayResult = game.beginDay();
   expect(dayResult.success).toBe(true);
   expect(dayResult.newDead?.length).toBe(1);
+});
 
+test("can't kill player with amulate", () => {
+  game = new WerewolfStateMachine("game-id", id2username, "test-seed");
+  game.assignRoles(Array.from(users.keys()), roleMap);
+
+  const p1 = game.playerPointsToPlayer("8", "2");
+  const p2 = game.playerPointsToPlayer("1", "3");
 });

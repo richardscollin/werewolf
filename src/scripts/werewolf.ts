@@ -1,7 +1,6 @@
 import { shuffleArray } from "./utils.js";
 import { Role, roles } from "./role.js";
 import { Team, IPointResult, IPlayerState, IDayResult } from "../interfaces.js";
-import { DiscordAPIError } from "discord.js";
 export { Role, IPlayerState, Team, roles };
 export type ClientId = string;
 
@@ -62,6 +61,10 @@ export class WerewolfStateMachine {
     } else {
       return undefined;
     }
+  }
+
+  awardAmulate(id: string) {
+    this.players.get(id)!.hasAmulate = true;
   }
 
   assignRoles(playerIds: string[], roleCounts: Map<string, number>) {

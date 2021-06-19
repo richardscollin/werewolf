@@ -8,11 +8,12 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "build": "webpack",
-    "build-server": "tsc",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "dev": "nodemon --exec node --loader ts-node/esm ./src/scripts/app.ts",
-    "fangbot": "nodemon --exec node --loader ts-node/esm ./src/discord-bot/fang-bot.ts"
+    "fangbot": "nodemon --exec node --loader ts-node/esm ./src/discord-bot/fang-bot.ts",
+    "www": "webpack"
   },
   "author": "Collin Richards",
   "license": "UNLICENSED",

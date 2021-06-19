@@ -46,6 +46,20 @@ export const commands: Discord.ApplicationCommandData[] = [
         type: "STRING",
       },
       {
+        name: "add-player",
+        description:
+          "Extra player to include in the game",
+        required: false,
+        type: "USER",
+      },
+      {
+        name: "remove-player",
+        description:
+          "Remove this player from the game when starting",
+        required: false,
+        type: "USER",
+      },
+      {
         name: "include-gm",
         description:
           "Assign the game master a role in the game. Defaults to false. (Useful for testing).",

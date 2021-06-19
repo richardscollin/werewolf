@@ -50,7 +50,6 @@ Note this project makes use of EMCAscript modules. This is feature has experimen
 
 After attempting to GM a game I noticed the following areas for improvement.
 
-- If a Characters Image is broken you cannot use that role
 - Pointing in a public channel isn't private
     - Potential Solution: Create seperate private text channels for each role
 - Voting / Nomination Workflow is too slow

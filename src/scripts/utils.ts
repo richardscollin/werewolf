@@ -10,15 +10,14 @@ export const html = (
   ...elements: string[]
 ): string => strings.join("");
 
-export function camelCase(str: string): string {
-  // https://stackoverflow.com/a/46116986
-  return str
-    .split("-")
-    .reduce((a, b) => a + b.charAt(0).toUpperCase() + b.slice(1));
-}
-
-export function shuffleArray(array: string[], seed: string|undefined) {
-  // https://stackoverflow.com/a/12646864
+export function shuffleArray(array: string[], seed: string | undefined) {
+  /*
+   * https://stackoverflow.com/a/12646864
+   * Licensed CC BY-SA 4.0
+   * https://creativecommons.org/licenses/by-sa/4.0/
+   * Modifications:
+   * - Added support for rng seed
+   */
   const rng = seedrandom(seed);
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));

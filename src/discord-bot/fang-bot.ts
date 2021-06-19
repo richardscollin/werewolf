@@ -22,15 +22,12 @@ const client = new Discord.Client({
 });
 
 client.once("ready", async () => {
-  console.log("fangbot is ready");
-  // console.log(Array.from(roles.keys()).join(","));
-  // await client.application?.commands.set(commands);
-  await client.application?.commands.set([]);
+  console.log("Starting fangbot ...");
   client.guilds.cache.forEach(async (guild) => {
-    console.log(guild.id);
+    console.log(`Running in ${guild.name}`);
     await guild?.commands.set(commands);
   });
-  console.log("Commands updated");
+  console.log("Commands updated.");
 });
 
 client.on("interaction", async (interaction: Discord.Interaction) => {
@@ -42,7 +39,10 @@ client.on("interaction", async (interaction: Discord.Interaction) => {
 
   const commandInteraction = interaction as Discord.CommandInteraction;
   const command = commandInteraction.command;
-  console.log(`Executing ${commandInteraction.commandName} command`);
+  console.log(`Recieved command: ${command?.options}`);
+  for (let option of command!.options) {
+    console.log(option.options);
+  }
   switch (commandInteraction.commandName as Command) {
     default:
       console.log(command);
@@ -245,7 +245,7 @@ async function night(interaction: Discord.CommandInteraction) {
 }
 
 async function day(interaction: Discord.CommandInteraction) {
-  const message = game.beginDay();
+  const { message } = game.beginDay();
   await secretReply(interaction, message);
 }
 
@@ -354,4 +354,53 @@ async function sendRole(
   const dm = await player?.createDM();
 
   await dm?.send({ embed: roleEmbed });
+}
+
+async function createPrivateChat(
+  guild: Discord.Guild,
+  userId: `${bigint}`,
+  channelName: string
+) {
+  const user = client.users.cache.get(userId);
+  const channels = guild.channels;
+
+  let fangbotCategory = channels.cache
+    .filter((guild) => guild.name.toLowerCase() === "fangbot")
+    .first();
+  if (fangbotCategory === undefined) {
+    fangbotCategory = await channels.create("FangBot", {
+      type: "category",
+    });
+  }
+
+  return channels.create(channelName, {
+    type: "text",
+    parent: fangbotCategory,
+    permissionOverwrites: [
+      {
+        id: userId,
+        allow: ["VIEW_CHANNEL", "SEND_MESSAGES"],
+      },
+    ],
+  });
+}
+
+async function sendMessageComponent(channel: Discord.TextChannel) {
+  const messageOptions: Discord.MessageOptions = {
+    content: "Message w/ components",
+    components: [
+      new Discord.MessageActionRow({
+        type: "ACTION_ROW",
+        components: [
+          new Discord.MessageButton({
+            type: "BUTTON",
+            label: "Hello",
+            style: "PRIMARY",
+            customID: "123",
+          }),
+        ],
+      }),
+    ],
+  };
+  channel.send({ ...messageOptions, split: false });
 }
